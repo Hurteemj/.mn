@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Имэйл баталгаажуулалт — ХҮРТЭЭМЖ</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@500;600;700;800&family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="login_s.css">
+</head>
+<body>
+
+<div class="login-page">
+
+  <a class="back-link" href="index.html">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3L4 8l6 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Нүүр хуудас руу буцах
+  </a>
+
+  <aside class="brand-panel">
+    <svg class="knot-field" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <pattern id="knotPattern" width="120" height="120" patternUnits="userSpaceOnUse">
+          <path class="knot-line" d="M10,60 C10,30 30,10 60,10 C90,10 110,30 110,60 C110,90 90,110 60,110 C30,110 10,90 10,60 Z" />
+          <path class="knot-line" d="M60,10 C60,40 40,60 10,60 M60,10 C60,40 80,60 110,60 M60,110 C60,80 40,60 10,60 M60,110 C60,80 80,60 110,60" />
+        </pattern>
+      </defs>
+      <rect width="600" height="900" fill="url(#knotPattern)" />
+    </svg>
+
+    <img class="knot-watermark" src="logo-badge.png" alt="" aria-hidden="true">
+
+    <div class="brand-content">
+      <a class="wordmark" href="index.html">
+        <img class="wordmark-knot" src="logo-badge.png" alt="ХАМТ лого" width="80" height="80" style="object-fit:contain;">
+        ХҮРТЭЭМЖ
+      </a>
+
+      <p class="brand-eyebrow">Сайн дурын платформ</p>
+      <h1 class="brand-headline" id="brandHeadline">Баталгаажуулж байна…</h1>
+      <p class="brand-tagline" id="brandTagline">Түр хүлээнэ үү.</p>
+    </div>
+  </aside>
+
+  <main class="form-panel">
+    <div class="form-card" id="statusCard">
+
+      <div id="stateChecking">
+        <h2 class="form-title">Баталгаажуулж байна…</h2>
+        <p class="form-subtitle">Холбоосыг шалгаж байна. Энэ хэдхэн секунд үргэлжилнэ.</p>
+      </div>
+
+      <div id="stateSuccess" style="display:none;">
+        <h2 class="form-title">✅ Баталгаажлаа!</h2>
+        <p class="form-subtitle">Таны холбоос амжилттай баталгаажлаа.</p>
+        <p id="successNote" style="margin:0 0 20px; padding:12px 14px; border-radius:8px; font-size:13.5px; font-weight:600; background:rgba(62,107,78,0.12); color:#3E6B4E;">
+          Хэрэв та имэйл хаягаа сольж байгаа бол, хуучин болон шинэ имэйл хаяг руу тус тусад нь холбоос илгээгдсэн. Хэрэв нөгөө имэйлээ хараахан шалгаагүй бол шалгаад, дотор нь байгаа холбоос дээр дарж баталгаажуулна уу — хоёуланг нь баталгаажуулсны дараа л имэйл хаяг бүрэн шинэчлэгдэнэ.
+        </p>
+        <a class="btn-primary" href="login.html" style="text-decoration:none; display:inline-flex; justify-content:center;">
+          Нэвтрэх хуудас руу очих
+        </a>
+      </div>
+
+      <div id="stateError" style="display:none;">
+        <h2 class="form-title">Холбоос хүчингүй байна</h2>
+        <p class="form-subtitle" id="errorMessage">Энэ холбоос хугацаа дууссан эсвэл өмнө нь ашиглагдсан байна.</p>
+        <p style="margin:0 0 20px; padding:12px 14px; border-radius:8px; font-size:13.5px; font-weight:600; background:rgba(201,106,54,0.12); color:#C96A36;">
+          Профайл хуудас руугаа орж, "Имэйл солих" эсвэл "Нууц үг солих" товчийг дахин дарж, шинэ холбоос авна уу. Холбоос зөвхөн нэг удаа ашиглагдана — хэрэв өмнө нь нэг удаа онгойлгосон бол дахин ажиллахгүй.
+        </p>
+        <a class="btn-primary" href="login.html" style="text-decoration:none; display:inline-flex; justify-content:center;">
+          Нэвтрэх хуудас руу очих
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase-client.js"></script>
+<script>
+  function showState(id) {
+    ['stateChecking', 'stateSuccess', 'stateError'].forEach(s => {
+      document.getElementById(s).style.display = (s === id) ? '' : 'none';
+    });
+  }
+
+  function setBrand(headline, tagline) {
+    document.getElementById('brandHeadline').textContent = headline;
+    document.getElementById('brandTagline').textContent = tagline;
+  }
+
+  // supabase-js automatically parses any access_token / error info out of
+  // the URL (query string or #fragment) on load, since the client is
+  // created with the default detectSessionInUrl: true. We just listen for
+  // the outcome instead of parsing the URL ourselves.
+
+  let settled = false;
+
+  function markSuccess() {
+    if (settled) return;
+    settled = true;
+    setBrand('Баталгаажлаа!', 'Амжилттай. Доорхыг уншина уу.');
+    showState('stateSuccess');
+  }
+
+  function markError(message) {
+    if (settled) return;
+    settled = true;
+    if (message) document.getElementById('errorMessage').textContent = message;
+    setBrand('Холбоос ажиллсангүй', 'Дахин оролдох шаардлагатай.');
+    showState('stateError');
+  }
+
+  // Supabase fires these on a successful token exchange from the URL.
+  supabaseClient.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'PASSWORD_RECOVERY') {
+      markSuccess();
+    }
+  });
+
+  // Explicit error params (e.g. #error=access_denied&error_code=otp_expired)
+  // land in the hash and don't fire onAuthStateChange at all, so check for
+  // those directly.
+  (function checkForErrorInUrl() {
+    const raw = (window.location.hash || window.location.search || '').replace(/^[#?]/, '');
+    if (!raw) return;
+    const params = new URLSearchParams(raw);
+    const err = params.get('error') || params.get('error_code');
+    if (err) {
+      const desc = params.get('error_description');
+      markError(desc ? decodeURIComponent(desc.replace(/\+/g, ' ')) : null);
+    }
+  })();
+
+  // If a session already existed on this page (or was set synchronously
+  // before our listener attached), treat that as success too.
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) markSuccess();
+  })();
+
+  // Fallback: if nothing resolved either way within a few seconds, assume
+  // the link was bad rather than leaving the page stuck on "checking".
+  setTimeout(() => { if (!settled) markError(); }, 5000);
+</script>
+
+</body>
+</html>
