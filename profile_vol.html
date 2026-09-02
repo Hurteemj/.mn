@@ -695,7 +695,11 @@
         return;
       }
 
-      const { error: updateError } = await supabaseClient.auth.updateUser({ email: newEmail });
+      const emailRedirectTo = new URL('email_confirmed.html', window.location.href).toString();
+      const { error: updateError } = await supabaseClient.auth.updateUser(
+        { email: newEmail },
+        { emailRedirectTo }
+      );
       if (updateError) {
         errEl.textContent = 'Алдаа гарлаа: ' + updateError.message;
         btn.disabled = false;
