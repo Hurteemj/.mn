@@ -221,6 +221,8 @@
         </select>
       </div>
 
+      <p id="oppProofNote" style="display:none; font-size:0.8rem; color:var(--ink-soft); margin:-6px 0 16px;">Биечлэн олгох гэрчилгээнд нотолгооны зураг шаардахгүй.</p>
+
       <div id="oppProofWrap" style="display:none;">
         <label class="modal-check">
           <input type="checkbox" id="oppProofRequired">
@@ -454,12 +456,14 @@
   const proofFields = document.getElementById('oppProofFields');
   const proofDesc = document.getElementById('oppProofDesc');
   const proofCounter = document.getElementById('oppProofCounter');
+  const proofNote = document.getElementById('oppProofNote');
 
-  // Proof photos only make sense when a certificate is given.
+  // Photo proof only applies to online certificates. Certificates handed out in person need none.
   function toggleProofFields() {
-    const hasCert = certTypeSelect.value !== 'none';
-    proofWrap.style.display = hasCert ? '' : 'none';
-    proofFields.style.display = hasCert && proofBox.checked ? '' : 'none';
+    const isOnline = certTypeSelect.value === 'online';
+    proofWrap.style.display = isOnline ? '' : 'none';
+    proofNote.style.display = certTypeSelect.value === 'in_person' ? '' : 'none';
+    proofFields.style.display = isOnline && proofBox.checked ? '' : 'none';
     proofCounter.textContent = `${proofDesc.value.length}/${PROOF_LIMITS.descMax}`;
   }
   certTypeSelect.addEventListener('change', toggleProofFields);
@@ -567,7 +571,7 @@
     }
 
     const certType = certTypeSelect.value;
-    const proofOn = certType !== 'none' && proofBox.checked;
+    const proofOn = certType === 'online' && proofBox.checked;
     const proofForm = {
       required: proofOn,
       min: parseInt(document.getElementById('oppProofMin').value, 10),
