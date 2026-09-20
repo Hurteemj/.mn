@@ -257,7 +257,9 @@
           : `<span class="cert-hint cert-hint--warn">📷 Гэрчилгээ авахын тулд ирцээ баталгаажуулна уу</span>`;
         panelHtml = proofPanelHtml(a, req, photos, st, true);
       } else {
-        actionHtml = `<span class="cert-hint">Гэрчилгээг байгууллага олгохыг хүлээнэ үү</span>`;
+        actionHtml = req.certificateType === 'in_person'
+          ? `<span class="cert-hint">🎓 Гэрчилгээг байгууллагаас биечлэн авна</span>`
+          : `<span class="cert-hint">Гэрчилгээг байгууллага олгохыг хүлээнэ үү</span>`;
       }
     } else if (a.status === 'pending') {
       actionHtml = `<span class="cert-hint">Байгууллагын баталгаажуулалтыг хүлээж байна</span>`;
