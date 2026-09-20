@@ -166,6 +166,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-client.js"></script>
+<script src="proof-photos.js"></script>
+<script src="proof-photos-ui.js"></script>
 <script src="nav-toggle.js"></script>
 <script src="notifications-ui.js"></script>
 <script>
@@ -244,6 +246,12 @@
     return `<button type="button" class="btn-apply" data-apply-id="${o.id}">Бүртгүүлэх</button>`;
   }
 
+  // Photo button for volunteers who attended (application status 'completed').
+  function proofButtonHtml(o) {
+    if (o.my_status !== 'completed' || !o.my_app_id) return '';
+    return ProofPhotosUI.buttonHtml({ appId: o.my_app_id, title: o.title, extraClass: 'btn-manage' });
+  }
+
   function cardHtml(o) {
     const cat = CATEGORY_MAP[o.category] || CATEGORY_MAP.other;
     const locationLine = o.location_type === 'online'
@@ -297,6 +305,7 @@
           </div>
           <div class="opp-actions">
             <a class="btn-manage" href="ajil_delgerengui.html?id=${o.id}">Дэлгэрэнгүй</a>
+            ${proofButtonHtml(o)}
             <button type="button" class="btn-report-opp" data-report-opp-id="${o.id}" data-report-org-id="${o.org_id}" data-report-opp-title="${escapeHtml(o.title)}" title="Энэ ажлыг мэдээлэх">🚩</button>
             ${applyButtonHtml(o)}
           </div>
@@ -405,20 +414,29 @@
 
       const { data: apps, error: appsError } = await supabaseClient
         .from('applications')
-        .select('opportunity_id, status, hours_logged')
+        .select('id, opportunity_id, status, hours_logged, attendance_photo_url')
         .eq('volunteer_id', currentProfile.id);
       if (appsError) throw appsError;
 
       const myApplications = apps || [];
       const myApps = {};
-      myApplications.forEach(a => { myApps[a.opportunity_id] = a.status; });
+      const myAppIds = {};
+      myApplications.forEach(a => { myApps[a.opportunity_id] = a.status; myAppIds[a.opportunity_id] = a.id; });
+
+      // Photo requirement + uploaded photos for events I attended. Failure must not break the feed.
+      try {
+        await ProofPhotosUI.load(myApplications.filter(a => a.status === 'completed'));
+      } catch (proofErr) {
+        console.warn('Proof photo info failed to load:', proofErr);
+      }
 
       oppList = opps.map(o => ({
         ...o,
         org_name: (o.org && o.org.org_name) || 'Байгууллага',
         org_verification_status: (o.org && o.org.verification_status) || null,
         applicant_count: counts[o.id] || 0,
-        my_status: myApps[o.id] || null
+        my_status: myApps[o.id] || null,
+        my_app_id: myAppIds[o.id] || null
       }));
 
       renderStats();
@@ -564,6 +582,8 @@
   })();
 
   document.getElementById('logoutBtn').addEventListener('click', signOut);
+
+  ProofPhotosUI.init({ onChange: renderFeed }); // refreshes the card button label after uploads
 
   document.getElementById('orgSignupLink').addEventListener('click', async (e) => {
     e.preventDefault();
