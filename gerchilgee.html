@@ -261,7 +261,12 @@
 
   <div class="content-grid" style="grid-template-areas: 'cert cert' 'proof proof' 'feed feed'; padding-top:40px;">
 
-    <div class="cert-card" style="grid-area: cert; margin-bottom:0;">
+    <div class="cert-card" id="inPersonNote" style="grid-area: cert; margin-bottom:0; display:none;">
+      <h4>Биечлэн гэрчилгээ</h4>
+      <p class="cert-status" style="margin:0;">Энэ ажил «Биечлэн гэрчилгээ»-тэй тул онлайн гэрчилгээ олгох боломжгүй. Гэрчилгээг сайн дурынханд биечлэн олгоно. Энд зөвхөн ирцийг «Ирсэн» гэж тэмдэглэнэ.</p>
+    </div>
+
+    <div class="cert-card" id="certCard" style="grid-area: cert; margin-bottom:0;">
       <h4>Гэрчилгээний загвар</h4>
       <p class="cert-status" id="certStatus">Ачааллаж байна…</p>
 
@@ -733,6 +738,12 @@
       document.querySelectorAll('#proofCard input, #proofCard textarea, #proofCard button').forEach(el => { el.disabled = true; });
       return;
     }
+    if (!proofReq.applicable) {
+      // In-person (or no) certificate: no photo proof, so hide the whole card.
+      document.getElementById('proofCard').style.display = 'none';
+      document.querySelector('.content-grid').style.gridTemplateAreas = "'cert cert' 'feed feed'";
+      return;
+    }
     fillProofForm(proofReq);
     renderProofStatus();
   }
@@ -841,6 +852,21 @@
     else if (e.key === 'ArrowRight') stepLightbox(1);
   });
 
+  // In-person certificates are handed out face to face, so no online certificate can be issued.
+  function isInPersonCert() {
+    return (currentOpp && currentOpp.certificate_type === 'in_person') || proofReq.certificateType === 'in_person';
+  }
+
+  function applyCertificateMode() {
+    const blocked = isInPersonCert();
+    document.getElementById('certCard').style.display = blocked ? 'none' : '';
+    document.getElementById('inPersonNote').style.display = blocked ? '' : 'none';
+    if (blocked) {
+      document.getElementById('proofCard').style.display = 'none';
+      document.querySelector('.content-grid').style.gridTemplateAreas = "'cert cert' 'feed feed'";
+    }
+  }
+
   function ireeguiApplicants() {
     if (currentOpp && currentOpp.experience_required) {
       return applicants.filter(a => a.status === 'confirmed');
@@ -879,7 +905,10 @@
     const photos = photosFor(a);
     const hasPhoto = photos.length > 0;
     const st = proofState(proofReq, photos.length);
-    const checkboxHtml = cert
+    const certsBlocked = isInPersonCert();
+    const checkboxHtml = certsBlocked
+      ? ''
+      : cert
       ? `<span style="width:16px; display:inline-block;"></span>`
       : `<input type="checkbox" class="member-select" data-id="${a.id}" ${selectedIds.has(a.id) ? 'checked' : ''} aria-label="${escapeHtml(fullName)}-г сонгох">`;
 
@@ -908,7 +937,7 @@
 
     const issueOrLinkHtml = cert
       ? `<a class="btn-manage" href="${escapeHtml(cert.url)}" target="_blank">Гэрчилгээ ↗</a>${verifyBtnHtml}`
-      : issueBtnHtml;
+      : (certsBlocked ? '' : issueBtnHtml);
 
     const actionsHtml = `<span class="member-hours">${a.hours_logged || 0} цаг</span>` + photoThumbHtml + viewBtn + issueOrLinkHtml;
 
@@ -939,7 +968,7 @@
       });
     }
 
-    document.getElementById('bulkBar').style.display = activeFilter === 'irsen' ? 'flex' : 'none';
+    document.getElementById('bulkBar').style.display = activeFilter === 'irsen' && !isInPersonCert() ? 'flex' : 'none';
 
     if (filtered.length === 0) {
       const hasPendingElsewhere = activeFilter === 'ireegui' && currentOpp && currentOpp.experience_required
@@ -1022,6 +1051,10 @@
   }
 
   async function handleIssueCertificate(id, currentHours, btn) {
+    if (isInPersonCert()) {
+      alert('Энэ ажил «Биечлэн гэрчилгээ»-тэй тул онлайн гэрчилгээ олгох боломжгүй.');
+      return;
+    }
     if (!existingTemplate) {
       alert('Эхлээд гэрчилгээний зургаа хадгална уу — дээрх "Гэрчилгээний загвар" хэсгээс PNG зураг сонгоод "Хадгалах" дарна уу.');
       return;
@@ -1064,6 +1097,10 @@
   });
 
   document.getElementById('bulkIssueBtn').addEventListener('click', async () => {
+    if (isInPersonCert()) {
+      alert('Энэ ажил «Биечлэн гэрчилгээ»-тэй тул онлайн гэрчилгээ олгох боломжгүй.');
+      return;
+    }
     const btn = document.getElementById('bulkIssueBtn');
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
@@ -1209,14 +1246,12 @@
     await loadCertificateTemplate();
     if (existingTemplate) await updatePreview();
     await loadProofRequirement();
+    applyCertificateMode();
     await loadApplicants();
   })();
 
   document.getElementById('logoutBtn').addEventListener('click', signOut);
 </script>
-
-</body>
-</html>
 
 </body>
 </html>
