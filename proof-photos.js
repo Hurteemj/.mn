@@ -15,14 +15,23 @@ const PROOF_LIMITS = {
   fileMaxBytes: 5 * 1024 * 1024,
   signedUrlSeconds: 3600,
 };
-const PROOF_DEFAULT_REQ = { required: false, min: 1, max: 3, description: '' };
+const PROOF_DEFAULT_REQ = { required: false, applicable: true, certificateType: null, min: 1, max: 3, description: '' };
 
 /* ---------- requirement (organization side) ---------- */
 
+// Photo proof only applies to online certificates. In-person ("биечлэн") certificates
+// are handed over face to face, so no photos are asked for. An unknown type counts as applicable.
+function proofAppliesTo(certificateType) {
+  return !certificateType || certificateType === 'online';
+}
+
 function normalizeProofRequirement(row) {
   if (!row) return { ...PROOF_DEFAULT_REQ };
+  const applicable = proofAppliesTo(row.certificate_type);
   return {
-    required: !!row.proof_required,
+    required: !!row.proof_required && applicable,
+    applicable,
+    certificateType: row.certificate_type || null,
     min: row.proof_min_photos || PROOF_DEFAULT_REQ.min,
     max: row.proof_max_photos || PROOF_DEFAULT_REQ.max,
     description: row.proof_description || '',
@@ -48,7 +57,7 @@ function validateProofRequirement(req) {
 async function getProofRequirement(opportunityId) {
   const { data, error } = await supabaseClient
     .from('opportunities')
-    .select('proof_required, proof_min_photos, proof_max_photos, proof_description')
+    .select('proof_required, proof_min_photos, proof_max_photos, proof_description, certificate_type')
     .eq('id', opportunityId)
     .maybeSingle();
   if (error) throw error;
@@ -73,7 +82,7 @@ async function saveProofRequirement(opportunityId, req) {
     .from('opportunities')
     .update(payload)
     .eq('id', opportunityId)
-    .select('proof_required, proof_min_photos, proof_max_photos, proof_description')
+    .select('proof_required, proof_min_photos, proof_max_photos, proof_description, certificate_type')
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error('Хадгалах эрх олдсонгүй.');
@@ -86,7 +95,7 @@ async function getProofRequirementsByApplication(applicationIds) {
   if (!ids.length) return {};
   const { data, error } = await supabaseClient
     .from('applications')
-    .select('id, opportunities(proof_required, proof_min_photos, proof_max_photos, proof_description)')
+    .select('id, opportunities(proof_required, proof_min_photos, proof_max_photos, proof_description, certificate_type)')
     .in('id', ids);
   if (error) throw error;
   const out = {};
@@ -171,6 +180,7 @@ function proofErrorMessage(err) {
   const msg = (err && err.message) || String(err);
   if (msg.includes('proof_photo_limit_reached')) return 'Зургийн дээд хэмжээнд хүрсэн байна.';
   if (msg.includes('proof_photos_not_required')) return 'Энэ ажилд нотолгооны зураг шаардаагүй байна.';
+  if (msg.includes('proof_photos_not_completed')) return 'Байгууллага ирцийг тэмдэглэсний дараа зураг оруулна уу.';
   return msg;
 }
 
