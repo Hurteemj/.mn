@@ -9,31 +9,22 @@
 const PROOF_BUCKET = 'proof-photos';
 const PROOF_LIMITS = {
   minAllowed: 1,            // an org may not ask for fewer than 1 photo
-  maxAllowed: 10,           // ...or more than 10
+  maxAllowed: 5,            // every event accepts at most 5 photos (fixed; orgs only choose the minimum)
   descMax: 500,             // characters in the "what should the photo show" text
   maxDimension: 1600,       // photos are downscaled to this many px on the long edge
   fileMaxBytes: 5 * 1024 * 1024,
   signedUrlSeconds: 3600,
 };
-const PROOF_DEFAULT_REQ = { required: false, applicable: true, certificateType: null, min: 1, max: 3, description: '' };
+const PROOF_DEFAULT_REQ = { required: false, min: 1, max: PROOF_LIMITS.maxAllowed, description: '' };
 
 /* ---------- requirement (organization side) ---------- */
 
-// Photo proof only applies to online certificates. In-person ("биечлэн") certificates
-// are handed over face to face, so no photos are asked for. An unknown type counts as applicable.
-function proofAppliesTo(certificateType) {
-  return !certificateType || certificateType === 'online';
-}
-
 function normalizeProofRequirement(row) {
   if (!row) return { ...PROOF_DEFAULT_REQ };
-  const applicable = proofAppliesTo(row.certificate_type);
   return {
-    required: !!row.proof_required && applicable,
-    applicable,
-    certificateType: row.certificate_type || null,
+    required: !!row.proof_required,
     min: row.proof_min_photos || PROOF_DEFAULT_REQ.min,
-    max: row.proof_max_photos || PROOF_DEFAULT_REQ.max,
+    max: PROOF_LIMITS.maxAllowed, // fixed for every event, whatever an older row says
     description: row.proof_description || '',
   };
 }
@@ -45,9 +36,6 @@ function validateProofRequirement(req) {
   if (!Number.isInteger(req.min) || req.min < minAllowed || req.min > maxAllowed) {
     return `Доод хэмжээ ${minAllowed}–${maxAllowed} хооронд бүхэл тоо байх ёстой.`;
   }
-  if (!Number.isInteger(req.max) || req.max < req.min || req.max > maxAllowed) {
-    return `Дээд хэмжээ доод хэмжээнээс багагүй, ${maxAllowed}-аас ихгүй бүхэл тоо байх ёстой.`;
-  }
   const desc = (req.description || '').trim();
   if (!desc) return 'Ямар зураг оруулахыг тайлбарлана уу.';
   if (desc.length > descMax) return `Тайлбар ${descMax} тэмдэгтээс хэтрэхгүй байх ёстой.`;
@@ -57,7 +45,7 @@ function validateProofRequirement(req) {
 async function getProofRequirement(opportunityId) {
   const { data, error } = await supabaseClient
     .from('opportunities')
-    .select('proof_required, proof_min_photos, proof_max_photos, proof_description, certificate_type')
+    .select('proof_required, proof_min_photos, proof_max_photos, proof_description')
     .eq('id', opportunityId)
     .maybeSingle();
   if (error) throw error;
@@ -72,7 +60,7 @@ async function saveProofRequirement(opportunityId, req) {
     ? {
         proof_required: true,
         proof_min_photos: req.min,
-        proof_max_photos: req.max,
+        proof_max_photos: PROOF_LIMITS.maxAllowed,
         proof_description: req.description.trim(),
       }
     // Turning it off keeps the previous numbers/text so the org can switch it back on.
@@ -82,7 +70,7 @@ async function saveProofRequirement(opportunityId, req) {
     .from('opportunities')
     .update(payload)
     .eq('id', opportunityId)
-    .select('proof_required, proof_min_photos, proof_max_photos, proof_description, certificate_type')
+    .select('proof_required, proof_min_photos, proof_max_photos, proof_description')
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error('Хадгалах эрх олдсонгүй.');
@@ -95,7 +83,7 @@ async function getProofRequirementsByApplication(applicationIds) {
   if (!ids.length) return {};
   const { data, error } = await supabaseClient
     .from('applications')
-    .select('id, opportunities(proof_required, proof_min_photos, proof_max_photos, proof_description, certificate_type)')
+    .select('id, opportunities(proof_required, proof_min_photos, proof_max_photos, proof_description)')
     .in('id', ids);
   if (error) throw error;
   const out = {};
@@ -180,7 +168,6 @@ function proofErrorMessage(err) {
   const msg = (err && err.message) || String(err);
   if (msg.includes('proof_photo_limit_reached')) return 'Зургийн дээд хэмжээнд хүрсэн байна.';
   if (msg.includes('proof_photos_not_required')) return 'Энэ ажилд нотолгооны зураг шаардаагүй байна.';
-  if (msg.includes('proof_photos_not_completed')) return 'Байгууллага ирцийг тэмдэглэсний дараа зураг оруулна уу.';
   return msg;
 }
 
@@ -220,6 +207,12 @@ async function deleteProofPhoto(photo) {
 
 function proofRangeText(req) {
   return req.min === req.max ? `${req.min} зураг` : `${req.min}–${req.max} зураг`;
+}
+
+/** How many photos a volunteer needs before the org may issue a certificate.
+ *  Events that don't require proof photos keep the old rule: at least 1 (the legacy attendance photo). */
+function proofPhotosNeeded(req) {
+  return req && req.required ? req.min : 1;
 }
 
 /** count = photos already submitted (including any legacy attendance photo) */
