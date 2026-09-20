@@ -189,12 +189,15 @@
     return list;
   }
 
-  function proofPanelHtml(a, req, photos, st) {
+  // canUpload is true only after the organization has marked the volunteer "Ирсэн" (status completed).
+  function proofPanelHtml(a, req, photos, st, canUpload) {
     const verified = !!a.attendance_photo_verified;
 
-    const progressHtml = st.ok
-      ? `<span class="proof-progress is-ok">✓ ${st.count} зураг оруулсан</span>`
-      : `<span class="proof-progress is-warn">${st.count}/${req.min} — ${st.missing} зураг дутуу</span>`;
+    const progressHtml = !canUpload
+      ? `<span class="proof-progress">Ирц хүлээгдэж байна</span>`
+      : st.ok
+        ? `<span class="proof-progress is-ok">✓ ${st.count} зураг оруулсан</span>`
+        : `<span class="proof-progress is-warn">${st.count}/${req.min} — ${st.missing} зураг дутуу</span>`;
 
     const thumbsHtml = photos.map(p => {
       const canRemove = !p.legacy && !verified;
@@ -207,10 +210,12 @@
     let actionsHtml;
     if (verified) {
       actionsHtml = `<span class="proof-note">✓ Байгууллага баталгаажуулсан</span>`;
+    } else if (!canUpload) {
+      actionsHtml = `<span class="proof-note">Байгууллага «Ирсэн» гэж тэмдэглэсний дараа энд «Ирц баталгаажуулах» товч гарч ирнэ.</span>`;
     } else if (st.canAdd) {
       actionsHtml = `
         <label class="btn-upload-photo">
-          <span class="upload-label-text">📷 Зураг нэмэх</span>
+          <span class="upload-label-text">📷 Ирц баталгаажуулах</span>
           <input type="file" accept="image/*" multiple data-action="upload-proof" data-id="${a.id}" hidden>
         </label>
         <span class="proof-note">Дахин ${st.slotsLeft} зураг нэмэх боломжтой</span>`;
@@ -221,7 +226,7 @@
     return `
       <div class="proof-panel">
         <div class="proof-head">
-          <span class="proof-title">📷 Нотолгооны зураг · ${escapeHtml(proofRangeText(req))}</span>
+          <span class="proof-title">📷 Ирц баталгаажуулах · ${escapeHtml(proofRangeText(req))}</span>
           ${progressHtml}
         </div>
         <p class="proof-desc"><strong>Ямар зураг оруулах вэ</strong>${escapeHtml(req.description)}</p>
@@ -248,17 +253,17 @@
         actionHtml = `<a class="btn-cert" href="${escapeHtml(cert.url)}" target="_blank" rel="noopener">Гэрчилгээ татах ↗</a>`;
       } else if (req.required) {
         actionHtml = st.ok
-          ? `<span class="cert-hint">✓ Нотолгоо хангалттай — гэрчилгээг хүлээнэ үү</span>`
-          : `<span class="cert-hint cert-hint--warn">📷 Гэрчилгээ авахын тулд нотолгооны зураг оруулна уу</span>`;
-        panelHtml = proofPanelHtml(a, req, photos, st);
+          ? `<span class="cert-hint">✓ Ирц баталгаажлаа — гэрчилгээг хүлээнэ үү</span>`
+          : `<span class="cert-hint cert-hint--warn">📷 Гэрчилгээ авахын тулд ирцээ баталгаажуулна уу</span>`;
+        panelHtml = proofPanelHtml(a, req, photos, st, true);
       } else {
         actionHtml = `<span class="cert-hint">Гэрчилгээг байгууллага олгохыг хүлээнэ үү</span>`;
       }
     } else if (a.status === 'pending') {
       actionHtml = `<span class="cert-hint">Байгууллагын баталгаажуулалтыг хүлээж байна</span>`;
     } else if (a.status === 'confirmed' && req.required) {
-      actionHtml = `<span class="cert-hint">Ажил дуусахад нотолгооны зураг шаардлагатай. Урьдчилан оруулж болно.</span>`;
-      panelHtml = proofPanelHtml(a, req, photos, st);
+      actionHtml = `<span class="cert-hint">Ирц бүртгэгдсэний дараа зургаар ирцээ баталгаажуулна.</span>`;
+      panelHtml = proofPanelHtml(a, req, photos, st, false);
     }
 
     return `
