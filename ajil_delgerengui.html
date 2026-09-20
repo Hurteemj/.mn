@@ -97,6 +97,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-client.js"></script>
+<script src="proof-photos.js"></script>
 <script>
   const CATEGORY_MAP = {
     environment: { label: 'Байгаль орчин',    tagClass: 'opp-tag--env' },
@@ -114,6 +115,7 @@
   let organization = null;
   let applicantCount = 0;
   let myApplication = null;
+  let proofReq = null;
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -327,6 +329,13 @@
         <p class="detail-desc">${escapeHtml(opportunity.experience_needed || 'Энэ ажилд туршлага шаардлагатай гэдгийг л зарлагч дурдсан байна.')}</p>
       </div>` : '';
 
+    const proofSectionHtml = (proofReq && proofReq.required) ? `
+      <div class="detail-section">
+        <h3>📷 Нотолгооны зураг</h3>
+        <p class="detail-desc">Гэрчилгээ авахын тулд ажил дууссаны дараа <strong>${escapeHtml(proofRangeText(proofReq))}</strong> оруулна. Зургийг «Миний идэвх» хэсгээс илгээнэ.</p>
+        <p class="detail-desc" style="margin-top:8px; white-space:pre-line;">${escapeHtml(proofReq.description)}</p>
+      </div>` : '';
+
     const benefitsSectionHtml = opportunity.benefits_provided ? `
       <div class="detail-section">
         <h3>Сайн дурынханд юу өгөгдөх вэ?</h3>
@@ -352,6 +361,7 @@
           ${timeLine ? `<span>${timeLine}</span>` : ''}
           ${hoursLine ? `<span>${hoursLine}</span>` : ''}
           ${certLine ? `<span>${certLine}</span>` : ''}
+          ${(proofReq && proofReq.required) ? `<span>📷 Нотолгоо: ${escapeHtml(proofRangeText(proofReq))}</span>` : ''}
           <span id="applicantsLabel">${applicantsText()}</span>
         </div>
 
@@ -362,6 +372,7 @@
 
         ${experienceSectionHtml}
         ${benefitsSectionHtml}
+        ${proofSectionHtml}
         ${orgMiniHtml}
 
         ${(currentProfile.role !== 'org' && organization && organization.verification_status !== 'verified') ? `
@@ -432,6 +443,13 @@
       organization = org;
       applicantCount = (stats.data && stats.data.applicant_count) || 0;
       myApplication = myApp;
+
+      try {
+        proofReq = await getProofRequirement(opportunity.id);
+      } catch (err) {
+        console.warn('Нотолгооны шаардлагыг ачаалж чадсангүй', err);
+        proofReq = null;
+      }
 
       renderDetail();
     } catch (err) {
