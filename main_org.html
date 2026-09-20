@@ -221,6 +221,33 @@
         </select>
       </div>
 
+      <div id="oppProofWrap" style="display:none;">
+        <label class="modal-check">
+          <input type="checkbox" id="oppProofRequired">
+          Гэрчилгээ авахын тулд нотолгооны зураг шаардах уу?
+        </label>
+
+        <div id="oppProofFields" style="display:none;">
+          <div class="modal-row">
+            <div class="modal-field">
+              <label for="oppProofMin">Хамгийн цөөн зураг</label>
+              <input type="number" id="oppProofMin" min="1" max="10" step="1" value="1">
+            </div>
+            <div class="modal-field">
+              <label for="oppProofMax">Хамгийн олон зураг</label>
+              <input type="number" id="oppProofMax" min="1" max="10" step="1" value="3">
+            </div>
+          </div>
+
+          <div class="modal-field">
+            <label for="oppProofDesc">Ямар зураг оруулах вэ?</label>
+            <textarea id="oppProofDesc" maxlength="500" placeholder="Жишээ нь: Мод тарьж буй өөрийнхөө зураг. Байршил тодорхой харагдаж, тарьсан суулгац ойрхон, тод байх."></textarea>
+            <span id="oppProofCounter" style="font-size:0.78rem; color:var(--ink-soft);">0/500</span>
+          </div>
+          <p style="font-size:0.8rem; color:var(--ink-soft); margin:-6px 0 16px;">Сайн дурынхан зураг оруулахдаа энэ тайлбарыг харна. Шаардлага нь бүртгүүлсэн бүх сайн дурынханд хамаарна.</p>
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="btn-manage" id="modalCancelBtn">Болих</button>
         <button type="submit" class="btn-apply" id="modalSaveBtn">Хадгалах</button>
@@ -233,6 +260,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-client.js"></script>
+<script src="proof-photos.js"></script>
 <script src="nav-toggle.js"></script>
 <script src="notifications-ui.js"></script>
 <script>
@@ -420,6 +448,34 @@
   function toggleExperienceFields() {
     experienceNeededWrap.style.display = experienceBox.checked ? '' : 'none';
   }
+  const certTypeSelect = document.getElementById('oppCertificateType');
+  const proofWrap = document.getElementById('oppProofWrap');
+  const proofBox = document.getElementById('oppProofRequired');
+  const proofFields = document.getElementById('oppProofFields');
+  const proofDesc = document.getElementById('oppProofDesc');
+  const proofCounter = document.getElementById('oppProofCounter');
+
+  // Proof photos only make sense when a certificate is given.
+  function toggleProofFields() {
+    const hasCert = certTypeSelect.value !== 'none';
+    proofWrap.style.display = hasCert ? '' : 'none';
+    proofFields.style.display = hasCert && proofBox.checked ? '' : 'none';
+    proofCounter.textContent = `${proofDesc.value.length}/${PROOF_LIMITS.descMax}`;
+  }
+  certTypeSelect.addEventListener('change', toggleProofFields);
+  proofBox.addEventListener('change', toggleProofFields);
+  proofDesc.addEventListener('input', toggleProofFields);
+  document.getElementById('oppProofMin').addEventListener('change', () => {
+    const minEl = document.getElementById('oppProofMin'), maxEl = document.getElementById('oppProofMax');
+    const min = parseInt(minEl.value, 10), max = parseInt(maxEl.value, 10);
+    if (Number.isInteger(min) && Number.isInteger(max) && min > max) maxEl.value = min;
+  });
+  document.getElementById('oppProofMax').addEventListener('change', () => {
+    const minEl = document.getElementById('oppProofMin'), maxEl = document.getElementById('oppProofMax');
+    const min = parseInt(minEl.value, 10), max = parseInt(maxEl.value, 10);
+    if (Number.isInteger(min) && Number.isInteger(max) && max < min) minEl.value = max;
+  });
+
   recurringBox.addEventListener('change', toggleRecurringFields);
   locationType.addEventListener('change', toggleLocationField);
   experienceBox.addEventListener('change', toggleExperienceFields);
@@ -457,6 +513,10 @@
       document.getElementById('oppMotivationQuestion').value = o.motivation_question || '';
       document.getElementById('oppBenefits').value = o.benefits_provided || '';
       document.getElementById('oppCertificateType').value = o.certificate_type || 'none';
+      proofBox.checked = !!o.proof_required;
+      document.getElementById('oppProofMin').value = o.proof_min_photos || PROOF_DEFAULT_REQ.min;
+      document.getElementById('oppProofMax').value = o.proof_max_photos || PROOF_DEFAULT_REQ.max;
+      proofDesc.value = o.proof_description || '';
       deleteBtn.style.display = '';
     } else {
       document.getElementById('modalTitle').textContent = 'Шинэ ажил нийтлэх';
@@ -469,6 +529,7 @@
     toggleRecurringFields();
     toggleLocationField();
     toggleExperienceFields();
+    toggleProofFields();
     overlay.classList.add('is-open');
   }
 
@@ -505,6 +566,22 @@
       return;
     }
 
+    const certType = certTypeSelect.value;
+    const proofOn = certType !== 'none' && proofBox.checked;
+    const proofForm = {
+      required: proofOn,
+      min: parseInt(document.getElementById('oppProofMin').value, 10),
+      max: parseInt(document.getElementById('oppProofMax').value, 10),
+      description: proofDesc.value,
+    };
+    const proofProblem = validateProofRequirement(proofForm);
+    if (proofProblem) {
+      modalError.textContent = proofProblem;
+      modalError.style.display = 'block';
+      modalError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
     const payload = {
       title: document.getElementById('oppTitle').value.trim(),
       description: document.getElementById('oppDesc').value.trim() || null,
@@ -526,8 +603,20 @@
       experience_question: experienceRequired ? (document.getElementById('oppExperienceQuestion').value.trim() || null) : null,
       motivation_question: experienceRequired ? (document.getElementById('oppMotivationQuestion').value.trim() || null) : null,
       benefits_provided: document.getElementById('oppBenefits').value.trim() || null,
-      certificate_type: document.getElementById('oppCertificateType').value
+      certificate_type: certType
     };
+
+    // Proof-photo columns are only sent when needed, so posting still works
+    // on a database where proof_photos_migration.sql hasn't been run yet.
+    const existingOpp = id ? oppList.find(x => String(x.id) === String(id)) : null;
+    if (proofOn) {
+      payload.proof_required = true;
+      payload.proof_min_photos = proofForm.min;
+      payload.proof_max_photos = proofForm.max;
+      payload.proof_description = proofForm.description.trim();
+    } else if (existingOpp && existingOpp.proof_required) {
+      payload.proof_required = false;
+    }
 
     const saveBtn = document.getElementById('modalSaveBtn');
     saveBtn.disabled = true;
