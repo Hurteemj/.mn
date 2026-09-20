@@ -78,6 +78,20 @@
     border: 1.5px solid var(--line); background: #fff; color: var(--ink-soft); cursor: pointer;
   }
   .btn-verify.is-verified { background: #DCFCE7; border-color: #86EFAC; color: #166534; }
+  .btn-verify:disabled { opacity: 0.55; cursor: not-allowed; }
+  .proof-chip {
+    padding: 5px 11px; font-size: 12px; border-radius: 999px; font-weight: 700; font-family: inherit;
+    border: 1.5px solid var(--line); background: #fff; cursor: pointer; white-space: nowrap;
+  }
+  .proof-chip.is-ok { background: #DCFCE7; border-color: #86EFAC; color: #166534; }
+  .proof-chip.is-short { background: #FEF3C7; border-color: #FDE68A; color: #92400E; }
+  .proof-gallery-hint { font-size: 13.5px; line-height: 1.5; color: var(--ink); margin: 0 0 8px; white-space: pre-line; }
+  .proof-gallery-count { font-size: 13px; font-weight: 700; margin: 0 0 12px; }
+  .proof-gallery-count.is-ok { color: #166534; }
+  .proof-gallery-count.is-short { color: #92400E; }
+  .proof-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+  .proof-gallery-grid a { display: block; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--line); background: var(--paper-dim); }
+  .proof-gallery-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .member-actions .btn-manage { padding: 8px 14px; font-size: 12.5px; }
   .member-hours { font-size: 12px; color: var(--ink-soft); margin-left: 4px; }
   .back-link { display:inline-block; margin-bottom:10px; font-size:13px; font-weight:600; color:var(--ink-soft); text-decoration:none; }
@@ -158,53 +172,6 @@
     0%, 100% { opacity: 1; }
     50%      { opacity: 0.55; }
   }
-  /* --- proof-of-volunteering photos --- */
-  .proof-toggle {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 14px; font-weight: 600; color: var(--ink); cursor: pointer; margin: 0;
-  }
-  .proof-toggle input {
-    width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0;
-    accent-color: var(--accent-dark, #4F46E5);
-  }
-  .proof-fields { margin-top: 18px; }
-  .proof-fields[hidden] { display: none; }
-  .cert-field textarea {
-    display: block; width: 100%; box-sizing: border-box; min-height: 96px; resize: vertical;
-    border: 1.5px solid var(--line); border-radius: var(--radius-sm);
-    padding: 10px 12px; font-size: 13px; line-height: 1.5; font-family: inherit;
-    color: var(--ink); background: var(--white);
-  }
-  .proof-counter { float: right; font-weight: 500; }
-  .proof-hint { font-size: 12px; color: var(--ink-soft); margin: 6px 0 0; }
-  .proof-summary {
-    background: var(--paper-dim); border-radius: var(--radius-sm);
-    padding: 10px 14px; margin: 16px 0 0; font-size: 13px; color: var(--ink); line-height: 1.5;
-  }
-  .attend-photo-strip { display: inline-flex; align-items: center; gap: 4px; }
-  .attend-photo-more {
-    height: 34px; min-width: 34px; padding: 0 8px; border-radius: 8px; cursor: pointer;
-    border: 1.5px solid var(--line); background: var(--paper-dim); color: var(--ink);
-    font-size: 12px; font-weight: 700; font-family: inherit;
-  }
-  .attend-photo-count { font-size: 11.5px; font-weight: 700; color: #166534; white-space: nowrap; }
-  .proof-lightbox {
-    position: fixed; inset: 0; z-index: 300; display: none;
-    flex-direction: column; align-items: center; justify-content: center;
-    padding: 24px; background: rgba(11, 17, 32, 0.88);
-  }
-  .proof-lightbox.is-open { display: flex; }
-  .proof-lightbox img {
-    max-width: min(92vw, 900px); max-height: 76vh; object-fit: contain;
-    border-radius: 12px; background: #000;
-  }
-  .proof-lightbox-bar { display: flex; align-items: center; gap: 14px; margin-top: 14px; color: #fff; font-size: 13px; }
-  .proof-lightbox-bar button {
-    background: rgba(255, 255, 255, 0.14); color: #fff; border: none; cursor: pointer;
-    width: 38px; height: 38px; border-radius: 50%; font-size: 18px; line-height: 1; font-family: inherit;
-  }
-  .proof-lightbox-bar button:hover { background: rgba(255, 255, 255, 0.28); }
-
   @media (max-width: 640px) {
     .member-row { flex-wrap: wrap; row-gap: 8px; }
     .member-actions { width: 100%; justify-content: flex-start; }
@@ -259,14 +226,9 @@
     </div>
   </section>
 
-  <div class="content-grid" style="grid-template-areas: 'cert cert' 'proof proof' 'feed feed'; padding-top:40px;">
+  <div class="content-grid" style="grid-template-areas: 'cert cert' 'feed feed'; padding-top:40px;">
 
-    <div class="cert-card" id="inPersonNote" style="grid-area: cert; margin-bottom:0; display:none;">
-      <h4>Биечлэн гэрчилгээ</h4>
-      <p class="cert-status" style="margin:0;">Энэ ажил «Биечлэн гэрчилгээ»-тэй тул онлайн гэрчилгээ олгох боломжгүй. Гэрчилгээг сайн дурынханд биечлэн олгоно. Энд зөвхөн ирцийг «Ирсэн» гэж тэмдэглэнэ.</p>
-    </div>
-
-    <div class="cert-card" id="certCard" style="grid-area: cert; margin-bottom:0;">
+    <div class="cert-card" style="grid-area: cert; margin-bottom:0;">
       <h4>Гэрчилгээний загвар</h4>
       <p class="cert-status" id="certStatus">Ачааллаж байна…</p>
 
@@ -301,42 +263,6 @@
       <p class="cert-status" id="certPreviewHint" style="display:none; margin-top:14px; margin-bottom:6px;">Жишээ (Бат Бат нэрээр):</p>
       <img id="certPreviewImg" alt="Гэрчилгээний жишээ" style="display:none; max-width:100%; margin-top:6px; border:1px solid var(--line); border-radius:var(--radius-sm);">
       <a id="certPreviewLink" href="#" target="_blank" style="display:none; margin-top:8px; font-size:12.5px; color:var(--forest); font-weight:600;">Шинэ таб дээр нээх ↗</a>
-    </div>
-
-    <div class="cert-card" id="proofCard" style="grid-area: proof; margin-bottom:0;">
-      <h4>Сайн дурын ажлын нотолгооны зураг</h4>
-      <p class="cert-status" id="proofStatus">Ачааллаж байна…</p>
-
-      <label class="proof-toggle">
-        <input type="checkbox" id="proofRequired">
-        <span>Гэрчилгээ олгохын өмнө сайн дурынхнаас нотолгооны зураг шаардах</span>
-      </label>
-
-      <div class="proof-fields" id="proofFields" hidden>
-        <div class="cert-grid">
-          <div class="cert-field">
-            <label for="proofMin">Хамгийн цөөн зураг</label>
-            <input type="number" id="proofMin" min="1" max="10" step="1" value="1">
-          </div>
-          <div class="cert-field">
-            <label for="proofMax">Хамгийн олон зураг</label>
-            <input type="number" id="proofMax" min="1" max="10" step="1" value="3">
-          </div>
-        </div>
-
-        <div class="cert-field">
-          <label for="proofDescription">Ямар зураг оруулах вэ? <span class="proof-counter" id="proofCounter">0/500</span></label>
-          <textarea id="proofDescription" rows="4" maxlength="500" placeholder="Жишээ: Мод тарьж буй өөрийнхөө зураг. Байршил тодорхой харагдаж, тарьсан суулгац ойрхон, тод байх."></textarea>
-          <p class="proof-hint">Энэ тайлбар ажлын дэлгэрэнгүй хуудас болон сайн дурынхан зураг оруулах хэсэгт харагдана.</p>
-        </div>
-
-        <p class="proof-summary" id="proofSummary"></p>
-      </div>
-
-      <div class="cert-actions" style="margin-top:16px;">
-        <button type="button" class="btn-apply" id="proofSaveBtn">Хадгалах</button>
-      </div>
-      <p class="cert-message" id="proofMessage"></p>
     </div>
 
     <div style="grid-area: feed;">
@@ -379,13 +305,13 @@
   </div>
 </div>
 
-<div class="proof-lightbox" id="proofLightbox" role="dialog" aria-modal="true" aria-label="Нотолгооны зураг">
-  <img id="proofLightboxImg" alt="Нотолгооны зураг">
-  <div class="proof-lightbox-bar">
-    <button type="button" id="proofPrev" aria-label="Өмнөх зураг">‹</button>
-    <span id="proofLightboxCaption"></span>
-    <button type="button" id="proofNext" aria-label="Дараагийн зураг">›</button>
-    <button type="button" id="proofClose" aria-label="Хаах">✕</button>
+<div class="modal-overlay" id="proofGalleryOverlay">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-head">
+      <h3 style="margin:0; font-size:1.1rem;" id="proofGalleryTitle">Нотолгооны зураг</h3>
+      <button class="modal-close" id="proofGalleryClose" type="button" aria-label="Хаах">&times;</button>
+    </div>
+    <div id="proofGalleryBody"></div>
   </div>
 </div>
 
@@ -432,8 +358,18 @@
   let selectedIds = new Set();
   let existingTemplate = null;
   let issuedCerts = {};
-  let proofReq = { ...PROOF_DEFAULT_REQ };
-  let proofPhotos = {};
+  let proofReq = { ...PROOF_DEFAULT_REQ }; // photo requirement the org set for this event
+  let proofByApp = {};                     // { [applicationId]: [{ id, url, path, createdAt }] }
+
+  // A volunteer's photos = new proof photos + the legacy attendance photo (if any).
+  function photoListFor(a) {
+    const list = [];
+    if (a.attendance_photo_url) list.push({ url: a.attendance_photo_url, legacy: true });
+    (proofByApp[String(a.id)] || []).forEach(p => list.push({ url: p.url, legacy: false }));
+    return list.filter(p => p.url);
+  }
+  function photosNeeded() { return proofPhotosNeeded(proofReq); }
+  function hasEnoughPhotos(a) { return photoListFor(a).length >= photosNeeded(); }
 
   function initialsFor(text) {
     return (text || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '??';
@@ -677,196 +613,6 @@
     }
   });
 
-  /* ---------- proof-of-volunteering photo requirement (organization) ---------- */
-
-  function showProofMessage(text, isError) {
-    const el = document.getElementById('proofMessage');
-    el.textContent = text;
-    el.className = 'cert-message ' + (isError ? 'is-error' : 'is-ok');
-    el.style.display = 'block';
-  }
-
-  function readProofForm() {
-    return {
-      required: document.getElementById('proofRequired').checked,
-      min: parseInt(document.getElementById('proofMin').value, 10),
-      max: parseInt(document.getElementById('proofMax').value, 10),
-      description: document.getElementById('proofDescription').value,
-    };
-  }
-
-  function fillProofForm(req) {
-    document.getElementById('proofRequired').checked = req.required;
-    document.getElementById('proofMin').value = req.min;
-    document.getElementById('proofMax').value = req.max;
-    document.getElementById('proofDescription').value = req.description;
-    updateProofFormUi();
-  }
-
-  function updateProofFormUi() {
-    const f = readProofForm();
-    document.getElementById('proofFields').hidden = !f.required;
-    document.getElementById('proofCounter').textContent =
-      `${document.getElementById('proofDescription').value.length}/${PROOF_LIMITS.descMax}`;
-
-    const summary = document.getElementById('proofSummary');
-    const rangeOk = Number.isInteger(f.min) && Number.isInteger(f.max) && f.min >= 1 && f.max >= f.min;
-    if (f.required && rangeOk) {
-      summary.textContent = (f.min === f.max
-        ? `Сайн дурынхан яг ${f.min} зураг оруулна.`
-        : `Сайн дурынхан ${f.min}–${f.max} зураг оруулна.`)
-        + ' Доод хэмжээндээ хүрээгүй хүнд гэрчилгээ олгох боломжгүй.';
-      summary.hidden = false;
-    } else {
-      summary.hidden = true;
-    }
-  }
-
-  function renderProofStatus() {
-    document.getElementById('proofStatus').textContent = proofReq.required
-      ? `Нотолгооны зураг шаардаж байна: ${proofRangeText(proofReq)}.`
-      : 'Одоогоор нотолгооны зураг шаардаагүй — гэрчилгээг зураггүйгээр олгож болно.';
-  }
-
-  async function loadProofRequirement() {
-    try {
-      proofReq = await getProofRequirement(oppId);
-    } catch (err) {
-      console.error(err);
-      document.getElementById('proofStatus').textContent =
-        'Нотолгооны зургийн тохиргоог ачаалж чадсангүй. proof_photos_migration.sql-г Supabase дээр ажиллуулсан эсэхээ шалгана уу.';
-      document.querySelectorAll('#proofCard input, #proofCard textarea, #proofCard button').forEach(el => { el.disabled = true; });
-      return;
-    }
-    if (!proofReq.applicable) {
-      // In-person (or no) certificate: no photo proof, so hide the whole card.
-      document.getElementById('proofCard').style.display = 'none';
-      document.querySelector('.content-grid').style.gridTemplateAreas = "'cert cert' 'feed feed'";
-      return;
-    }
-    fillProofForm(proofReq);
-    renderProofStatus();
-  }
-
-  document.getElementById('proofRequired').addEventListener('change', updateProofFormUi);
-  document.getElementById('proofDescription').addEventListener('input', updateProofFormUi);
-  document.getElementById('proofMin').addEventListener('input', updateProofFormUi);
-  document.getElementById('proofMax').addEventListener('input', updateProofFormUi);
-  // Keep min <= max once the user is done typing in a field.
-  document.getElementById('proofMin').addEventListener('change', () => {
-    const minEl = document.getElementById('proofMin'), maxEl = document.getElementById('proofMax');
-    const min = parseInt(minEl.value, 10), max = parseInt(maxEl.value, 10);
-    if (Number.isInteger(min) && Number.isInteger(max) && min > max) maxEl.value = min;
-    updateProofFormUi();
-  });
-  document.getElementById('proofMax').addEventListener('change', () => {
-    const minEl = document.getElementById('proofMin'), maxEl = document.getElementById('proofMax');
-    const min = parseInt(minEl.value, 10), max = parseInt(maxEl.value, 10);
-    if (Number.isInteger(min) && Number.isInteger(max) && max < min) minEl.value = max;
-    updateProofFormUi();
-  });
-
-  document.getElementById('proofSaveBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('proofSaveBtn');
-    const form = readProofForm();
-    const problem = validateProofRequirement(form);
-    if (problem) {
-      showProofMessage(problem, true);
-      return;
-    }
-    btn.disabled = true;
-    btn.textContent = 'Хадгалж байна…';
-    try {
-      proofReq = await saveProofRequirement(oppId, form);
-      fillProofForm(proofReq);
-      renderProofStatus();
-      showProofMessage('Нотолгооны зургийн шаардлага хадгалагдлаа.', false);
-      renderMembers();
-    } catch (err) {
-      showProofMessage('Хадгалахад алдаа гарлаа: ' + (err.message || String(err)), true);
-      console.error(err);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Хадгалах';
-    }
-  });
-
-  /* ---------- photos per volunteer ---------- */
-
-  // New proof photos plus the old single "attendance photo" (if the volunteer already sent one).
-  function photosFor(a) {
-    const list = (proofPhotos[String(a.id)] || []).slice();
-    if (a.attendance_photo_url) list.unshift({ id: 'legacy', url: a.attendance_photo_url, legacy: true });
-    return list;
-  }
-
-  // '' when this volunteer may receive a certificate, otherwise the reason.
-  function proofBlocker(a) {
-    if (!proofReq.required) return '';
-    const st = proofState(proofReq, photosFor(a).length);
-    return st.ok ? '' : `Нотолгооны зураг дутуу байна (${st.count}/${proofReq.min}).`;
-  }
-
-  const lightbox = { photos: [], index: 0, name: '' };
-
-  function renderLightbox() {
-    const p = lightbox.photos[lightbox.index];
-    document.getElementById('proofLightboxImg').src = p.url;
-    document.getElementById('proofLightboxCaption').textContent =
-      `${lightbox.name ? lightbox.name + ' · ' : ''}${lightbox.index + 1} / ${lightbox.photos.length}`;
-    const multi = lightbox.photos.length > 1;
-    document.getElementById('proofPrev').style.visibility = multi ? 'visible' : 'hidden';
-    document.getElementById('proofNext').style.visibility = multi ? 'visible' : 'hidden';
-  }
-  function openProofLightbox(appId, index) {
-    const a = applicants.find(x => String(x.id) === String(appId));
-    if (!a) return;
-    lightbox.photos = photosFor(a);
-    if (!lightbox.photos.length) return;
-    const v = a.volunteer || {};
-    lightbox.name = [v.first_name, v.last_name].filter(Boolean).join(' ');
-    lightbox.index = Math.min(Math.max(index, 0), lightbox.photos.length - 1);
-    renderLightbox();
-    document.getElementById('proofLightbox').classList.add('is-open');
-  }
-  function closeProofLightbox() {
-    document.getElementById('proofLightbox').classList.remove('is-open');
-    document.getElementById('proofLightboxImg').removeAttribute('src');
-  }
-  function stepLightbox(delta) {
-    const n = lightbox.photos.length;
-    if (n < 2) return;
-    lightbox.index = (lightbox.index + delta + n) % n;
-    renderLightbox();
-  }
-  document.getElementById('proofPrev').addEventListener('click', () => stepLightbox(-1));
-  document.getElementById('proofNext').addEventListener('click', () => stepLightbox(1));
-  document.getElementById('proofClose').addEventListener('click', closeProofLightbox);
-  document.getElementById('proofLightbox').addEventListener('click', (e) => {
-    if (e.target.id === 'proofLightbox') closeProofLightbox();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (!document.getElementById('proofLightbox').classList.contains('is-open')) return;
-    if (e.key === 'Escape') closeProofLightbox();
-    else if (e.key === 'ArrowLeft') stepLightbox(-1);
-    else if (e.key === 'ArrowRight') stepLightbox(1);
-  });
-
-  // In-person certificates are handed out face to face, so no online certificate can be issued.
-  function isInPersonCert() {
-    return (currentOpp && currentOpp.certificate_type === 'in_person') || proofReq.certificateType === 'in_person';
-  }
-
-  function applyCertificateMode() {
-    const blocked = isInPersonCert();
-    document.getElementById('certCard').style.display = blocked ? 'none' : '';
-    document.getElementById('inPersonNote').style.display = blocked ? '' : 'none';
-    if (blocked) {
-      document.getElementById('proofCard').style.display = 'none';
-      document.querySelector('.content-grid').style.gridTemplateAreas = "'cert cert' 'feed feed'";
-    }
-  }
-
   function ireeguiApplicants() {
     if (currentOpp && currentOpp.experience_required) {
       return applicants.filter(a => a.status === 'confirmed');
@@ -902,44 +648,32 @@
     }
 
     const cert = issuedCerts[a.id];
-    const photos = photosFor(a);
-    const hasPhoto = photos.length > 0;
-    const st = proofState(proofReq, photos.length);
-    const certsBlocked = isInPersonCert();
-    const checkboxHtml = certsBlocked
-      ? ''
-      : cert
+    const photos = photoListFor(a);
+    const photoCount = photos.length;
+    const needed = photosNeeded();
+    const hasPhoto = photoCount > 0;
+    const enough = photoCount >= needed;
+    const checkboxHtml = cert
       ? `<span style="width:16px; display:inline-block;"></span>`
       : `<input type="checkbox" class="member-select" data-id="${a.id}" ${selectedIds.has(a.id) ? 'checked' : ''} aria-label="${escapeHtml(fullName)}-г сонгох">`;
 
-    const shown = photos.slice(0, 3);
-    let photoThumbHtml = '';
-    if (hasPhoto) {
-      photoThumbHtml = `<span class="attend-photo-strip">`
-        + shown.map((p, i) => `<img class="attend-photo-thumb" src="${escapeHtml(p.url)}" alt="Нотолгооны зураг ${i + 1}" data-action="photo" data-id="${a.id}" data-index="${i}" title="Томоор харах">`).join('')
-        + (photos.length > shown.length ? `<button type="button" class="attend-photo-more" data-action="photo" data-id="${a.id}" data-index="${shown.length}" title="Бусад зургийг харах">+${photos.length - shown.length}</button>` : '')
-        + `</span>`;
-    }
-    if (proofReq.required && !cert) {
-      photoThumbHtml += st.ok
-        ? `<span class="attend-photo-count">📷 ${st.count}/${proofReq.max}</span>`
-        : `<span class="attend-photo-missing">📷 Зураг дутуу (${st.count}/${proofReq.min})</span>`;
-    }
+    const photoThumbHtml = hasPhoto
+      ? `<img class="attend-photo-thumb" src="${escapeHtml(photos[0].url)}" alt="Нотолгооны зураг" data-action="gallery" data-id="${a.id}" title="Зургуудыг томоор харах">` +
+        `<button type="button" class="proof-chip ${enough ? 'is-ok' : 'is-short'}" data-action="gallery" data-id="${a.id}" title="Илгээсэн зургуудыг харах">${enough ? `📷 ${photoCount} зураг` : `📷 ${photoCount}/${needed} — дутуу`}</button>`
+      : (cert ? '' : `<span class="attend-photo-missing">📷 Зураг ирээгүй${needed > 1 ? ` (0/${needed})` : ''}</span>`);
 
+    // Shown on every attended row; disabled until the volunteer has sent a photo.
     const verifyBtnHtml = hasPhoto
       ? `<button type="button" class="btn-verify${a.attendance_photo_verified ? ' is-verified' : ''}" data-action="verify" data-id="${a.id}" data-verified="${a.attendance_photo_verified ? '1' : '0'}">${a.attendance_photo_verified ? '✓ Баталгаажсан' : 'Баталгаажуулах'}</button>`
-      : '';
-
-    const canIssue = !proofReq.required || st.ok;
-    const issueBtnHtml = canIssue
-      ? `<button class="btn-manage" data-action="issue" data-id="${a.id}" data-hours="${a.hours_logged || ''}">Гэрчилгээ олгох</button>`
-      : `<button class="btn-manage" data-action="issue" data-id="${a.id}" data-hours="${a.hours_logged || ''}" disabled title="${escapeHtml(`Сайн дурынхан доод тал нь ${proofReq.min} нотолгооны зураг илгээх хүртэл гэрчилгээ олгох боломжгүй`)}">Гэрчилгээ олгох</button>`;
+      : `<button type="button" class="btn-verify" disabled title="Сайн дурынхан ирцийн зураг илгээх хүртэл баталгаажуулах боломжгүй">Баталгаажуулах</button>`;
 
     const issueOrLinkHtml = cert
-      ? `<a class="btn-manage" href="${escapeHtml(cert.url)}" target="_blank">Гэрчилгээ ↗</a>${verifyBtnHtml}`
-      : (certsBlocked ? '' : issueBtnHtml);
+      ? `<a class="btn-manage" href="${escapeHtml(cert.url)}" target="_blank">Гэрчилгээ ↗</a>`
+      : (enough
+          ? `<button class="btn-manage" data-action="issue" data-id="${a.id}" data-hours="${a.hours_logged || ''}">Гэрчилгээ олгох</button>`
+          : `<button class="btn-manage" data-action="issue" data-id="${a.id}" data-hours="${a.hours_logged || ''}" disabled title="Гэрчилгээ олгохын тулд дор хаяж ${needed} зураг шаардлагатай (одоо ${photoCount})">Гэрчилгээ олгох</button>`);
 
-    const actionsHtml = `<span class="member-hours">${a.hours_logged || 0} цаг</span>` + photoThumbHtml + viewBtn + issueOrLinkHtml;
+    const actionsHtml = `<span class="member-hours">${a.hours_logged || 0} цаг</span>` + photoThumbHtml + viewBtn + verifyBtnHtml + issueOrLinkHtml;
 
     return `
       <div class="member-row" data-status="${a.status}" style="gap:10px;">
@@ -968,7 +702,7 @@
       });
     }
 
-    document.getElementById('bulkBar').style.display = activeFilter === 'irsen' && !isInPersonCert() ? 'flex' : 'none';
+    document.getElementById('bulkBar').style.display = activeFilter === 'irsen' ? 'flex' : 'none';
 
     if (filtered.length === 0) {
       const hasPendingElsewhere = activeFilter === 'ireegui' && currentOpp && currentOpp.experience_required
@@ -993,8 +727,8 @@
     panel.querySelectorAll('[data-action="issue"]').forEach(btn => {
       btn.addEventListener('click', () => handleIssueCertificate(btn.getAttribute('data-id'), btn.getAttribute('data-hours'), btn));
     });
-    panel.querySelectorAll('[data-action="photo"]').forEach(el => {
-      el.addEventListener('click', () => openProofLightbox(el.getAttribute('data-id'), Number(el.getAttribute('data-index')) || 0));
+    panel.querySelectorAll('[data-action="gallery"]').forEach(el => {
+      el.addEventListener('click', () => openProofGallery(el.getAttribute('data-id')));
     });
     panel.querySelectorAll('[data-action="verify"]').forEach(btn => {
       btn.addEventListener('click', () => handleTogglePhotoVerified(btn.getAttribute('data-id'), btn.getAttribute('data-verified') === '1', btn));
@@ -1051,18 +785,13 @@
   }
 
   async function handleIssueCertificate(id, currentHours, btn) {
-    if (isInPersonCert()) {
-      alert('Энэ ажил «Биечлэн гэрчилгээ»-тэй тул онлайн гэрчилгээ олгох боломжгүй.');
-      return;
-    }
     if (!existingTemplate) {
       alert('Эхлээд гэрчилгээний зургаа хадгална уу — дээрх "Гэрчилгээний загвар" хэсгээс PNG зураг сонгоод "Хадгалах" дарна уу.');
       return;
     }
     const a = applicants.find(x => String(x.id) === String(id));
-    const blocker = a ? proofBlocker(a) : '';
-    if (blocker) {
-      alert(`${blocker} Гэрчилгээ олгохын өмнө сайн дурынхан "Миний идэвх" хэсгээс шаардлагатай зургаа оруулах ёстой.`);
+    if (a && !hasEnoughPhotos(a)) {
+      alert(`Энэ сайн дурынхан шаардлагатай зургаа (${photosNeeded()}) хараахан илгээгээгүй тул гэрчилгээ олгох боломжгүй байна (одоо ${photoListFor(a).length}). Тэднийг ирсэн ажлын карт дээрх "Зураг оруулах" товчоор зургаа оруулахыг хүснэ үү.`);
       return;
     }
     const input = prompt('Хэдэн цаг ажилласныг гэрчилгээнд бичих вэ?', currentHours || '');
@@ -1097,10 +826,6 @@
   });
 
   document.getElementById('bulkIssueBtn').addEventListener('click', async () => {
-    if (isInPersonCert()) {
-      alert('Энэ ажил «Биечлэн гэрчилгээ»-тэй тул онлайн гэрчилгээ олгох боломжгүй.');
-      return;
-    }
     const btn = document.getElementById('bulkIssueBtn');
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
@@ -1121,11 +846,11 @@
 
     const withoutPhoto = ids.filter(id => {
       const a = applicants.find(x => String(x.id) === String(id));
-      return a && proofBlocker(a);
+      return a && !hasEnoughPhotos(a);
     });
     const toIssue = ids.filter(id => !withoutPhoto.includes(id));
     if (withoutPhoto.length > 0 && toIssue.length === 0) {
-      alert('Сонгосон хүмүүс хэн ч шаардлагатай нотолгооны зургаа илгээгээгүй тул гэрчилгээ олгох боломжгүй байна.');
+      alert(`Сонгосон хүмүүс хэн ч шаардлагатай ${photosNeeded()} зургаа илгээгээгүй тул гэрчилгээ олгох боломжгүй байна.`);
       return;
     }
 
@@ -1144,7 +869,7 @@
     selectedIds.clear();
     await loadApplicants();
     if (withoutPhoto.length > 0) {
-      alert(`${withoutPhoto.length} хүн нотолгооны зургаа дутуу илгээсэн тул алгассан.`);
+      alert(`${withoutPhoto.length} хүн шаардлагатай ${photosNeeded()} зургаа илгээгээгүй тул алгассан.`);
     }
     if (failures.length > 0) {
       alert(`${failures.length} гэрчилгээ үүсгэхэд алдаа гарлаа.`);
@@ -1156,20 +881,63 @@
     renderMembers();
   });
 
+  // Photo requirement for this event + the proof photos volunteers uploaded. Failures fall back to the
+  // legacy attendance photo only, so the page keeps working if the proof-photo tables aren't set up yet.
+  async function loadProofData(completedIds) {
+    try {
+      proofReq = await getProofRequirement(oppId);
+    } catch (err) {
+      console.warn('Could not load proof photo requirement:', err);
+      proofReq = { ...PROOF_DEFAULT_REQ };
+    }
+    try {
+      proofByApp = await getProofPhotos(completedIds);
+    } catch (err) {
+      console.warn('Could not load proof photos:', err);
+      proofByApp = {};
+    }
+  }
+
+  function openProofGallery(id) {
+    const a = applicants.find(x => String(x.id) === String(id));
+    if (!a) return;
+    const v = a.volunteer || {};
+    const fullName = [v.first_name, v.last_name].filter(Boolean).join(' ') || 'Нэргүй гишүүн';
+    const photos = photoListFor(a);
+    const needed = photosNeeded();
+    const enough = photos.length >= needed;
+
+    const reqHtml = proofReq.required
+      ? `<p class="proof-gallery-hint"><strong>Шаардлага: ${proofRangeText(proofReq)}</strong>${proofReq.description ? `<br>${escapeHtml(proofReq.description)}` : ''}</p>`
+      : '';
+    const countHtml = `<p class="proof-gallery-count ${enough ? 'is-ok' : 'is-short'}">${enough
+      ? `✓ ${photos.length} зураг илгээсэн — гэрчилгээ олгоход хангалттай`
+      : `${photos.length}/${needed} зураг — гэрчилгээ олгоход дор хаяж ${needed} зураг хэрэгтэй`}</p>`;
+    const gridHtml = photos.length
+      ? `<div class="proof-gallery-grid">${photos.map(p => `<a href="${escapeHtml(p.url)}" target="_blank" rel="noopener"><img src="${escapeHtml(p.url)}" alt="Нотолгооны зураг"></a>`).join('')}</div>`
+      : '<p class="load-state">Зураг ирээгүй байна.</p>';
+
+    document.getElementById('proofGalleryTitle').textContent = `Нотолгооны зураг: ${fullName}`;
+    document.getElementById('proofGalleryBody').innerHTML = reqHtml + countHtml + gridHtml;
+    document.getElementById('proofGalleryOverlay').classList.add('is-open');
+  }
+  function closeProofGallery() {
+    document.getElementById('proofGalleryOverlay').classList.remove('is-open');
+  }
+  document.getElementById('proofGalleryClose').addEventListener('click', closeProofGallery);
+  document.getElementById('proofGalleryOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'proofGalleryOverlay') closeProofGallery();
+  });
+
   async function loadApplicants() {
     applicants = await getApplicantsForOpportunity(oppId);
-    try {
-      proofPhotos = await getProofPhotos(applicants.map(a => a.id));
-    } catch (err) {
-      console.warn('Нотолгооны зургийг ачаалж чадсангүй', err);
-      proofPhotos = {};
-    }
     const completedIds = applicants.filter(a => a.status === 'completed').map(a => a.id);
     const certMap = await getIssuedCertificates(completedIds);
     issuedCerts = {};
     for (const [appId, cert] of Object.entries(certMap)) {
       issuedCerts[appId] = { ...cert, url: getCertificateTemplateUrl(cert.storage_path, cert.issued_at) };
     }
+    await loadProofData(completedIds);
     const stillIssuable = new Set(completedIds.filter(id => !issuedCerts[id]));
     selectedIds = new Set(Array.from(selectedIds).filter(id => stillIssuable.has(id)));
     renderStats();
@@ -1245,8 +1013,6 @@
 
     await loadCertificateTemplate();
     if (existingTemplate) await updatePreview();
-    await loadProofRequirement();
-    applyCertificateMode();
     await loadApplicants();
   })();
 
