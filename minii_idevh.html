@@ -23,6 +23,38 @@
   .photo-thumb-link { display: inline-flex; }
   .photo-thumb { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; border: 1.5px solid var(--line, rgba(32,48,63,0.14)); }
 
+  /* --- proof-of-volunteering photos --- */
+  .proof-panel {
+    flex: 1 1 100%;
+    background: var(--paper-dim, #F1ECE4);
+    border-radius: var(--radius-md, 16px);
+    padding: 14px 16px;
+  }
+  .proof-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .proof-title { font-weight: 700; font-size: 0.9rem; color: var(--ink, #20303F); }
+  .proof-progress {
+    font-size: 0.76rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+    background: #fff; color: var(--ink-soft, #4A5C6B); white-space: nowrap;
+  }
+  .proof-progress.is-ok   { background: #DCFCE7; color: #166534; }
+  .proof-progress.is-warn { background: #FEE2E2; color: #B91C1C; }
+  .proof-desc { margin: 10px 0 0; font-size: 0.85rem; line-height: 1.55; color: var(--ink, #20303F); white-space: pre-line; }
+  .proof-desc strong { display: block; font-size: 0.76rem; color: var(--ink-soft, #4A5C6B); margin-bottom: 2px; }
+  .proof-thumbs { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+  .proof-thumb { position: relative; width: 76px; height: 76px; }
+  .proof-thumb a { display: block; width: 100%; height: 100%; }
+  .proof-thumb img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    border-radius: 10px; border: 1.5px solid var(--line, rgba(32,48,63,0.14));
+  }
+  .proof-thumb-remove {
+    position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; padding: 0;
+    border: none; border-radius: 50%; background: #B91C1C; color: #fff;
+    font-size: 14px; line-height: 1; cursor: pointer;
+  }
+  .proof-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+  .proof-note { font-size: 0.8rem; color: var(--ink-soft, #4A5C6B); }
+
   @media (max-width: 640px) {
     .member-row { flex-wrap: wrap; }
     .member-action-group { width: 100%; justify-content: flex-start; margin-top: 8px; }
@@ -106,6 +138,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-client.js"></script>
+<script src="proof-photos.js"></script>
 <script src="nav-toggle.js"></script>
 <script src="notifications-ui.js"></script>
 <script>
@@ -117,6 +150,8 @@
   let activities = [];
   let activeFilter = 'all';
   let issuedCerts = {};
+  let proofReqs = {};    // applicationId -> requirement set by the organization
+  let proofPhotos = {};  // applicationId -> photos I uploaded
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -147,47 +182,83 @@
     return o.event_date ? formatMonthDay(o.event_date) : 'Огноо тодорхойгүй';
   }
 
+  // New proof photos plus the old single "attendance photo" (if one was already sent).
+  function photosFor(a) {
+    const list = (proofPhotos[String(a.id)] || []).slice();
+    if (a.attendance_photo_url) list.unshift({ id: 'legacy', url: a.attendance_photo_url, legacy: true });
+    return list;
+  }
+
+  function proofPanelHtml(a, req, photos, st) {
+    const verified = !!a.attendance_photo_verified;
+
+    const progressHtml = st.ok
+      ? `<span class="proof-progress is-ok">✓ ${st.count} зураг оруулсан</span>`
+      : `<span class="proof-progress is-warn">${st.count}/${req.min} — ${st.missing} зураг дутуу</span>`;
+
+    const thumbsHtml = photos.map(p => {
+      const canRemove = !p.legacy && !verified;
+      return `<div class="proof-thumb">
+          <a href="${escapeHtml(p.url)}" target="_blank" rel="noopener"><img src="${escapeHtml(p.url)}" alt="Нотолгооны зураг"></a>
+          ${canRemove ? `<button type="button" class="proof-thumb-remove" data-action="remove-proof" data-app="${a.id}" data-photo="${p.id}" aria-label="Зургийг устгах" title="Устгах">×</button>` : ''}
+        </div>`;
+    }).join('');
+
+    let actionsHtml;
+    if (verified) {
+      actionsHtml = `<span class="proof-note">✓ Байгууллага баталгаажуулсан</span>`;
+    } else if (st.canAdd) {
+      actionsHtml = `
+        <label class="btn-upload-photo">
+          <span class="upload-label-text">📷 Зураг нэмэх</span>
+          <input type="file" accept="image/*" multiple data-action="upload-proof" data-id="${a.id}" hidden>
+        </label>
+        <span class="proof-note">Дахин ${st.slotsLeft} зураг нэмэх боломжтой</span>`;
+    } else {
+      actionsHtml = `<span class="proof-note">Зургийн дээд хэмжээнд (${req.max}) хүрсэн байна</span>`;
+    }
+
+    return `
+      <div class="proof-panel">
+        <div class="proof-head">
+          <span class="proof-title">📷 Нотолгооны зураг · ${escapeHtml(proofRangeText(req))}</span>
+          ${progressHtml}
+        </div>
+        <p class="proof-desc"><strong>Ямар зураг оруулах вэ</strong>${escapeHtml(req.description)}</p>
+        ${thumbsHtml ? `<div class="proof-thumbs">${thumbsHtml}</div>` : ''}
+        <div class="proof-actions">${actionsHtml}</div>
+      </div>`;
+  }
+
   function rowHtml(a) {
     const o = a.opportunity || {};
     const org = o.organization || {};
     const badgeClass = STATUS_BADGE_CLASS[a.status] || 'status-badge--pending';
     const statusLabel = STATUS_MAP[a.status] || a.status;
 
+    const req = proofReqs[String(a.id)] || { ...PROOF_DEFAULT_REQ };
+    const photos = photosFor(a);
+    const st = proofState(req, photos.length);
+    const cert = issuedCerts[a.id];
+
     let actionHtml = '';
+    let panelHtml = '';
     if (a.status === 'completed') {
-      const cert = issuedCerts[a.id];
       if (cert) {
         actionHtml = `<a class="btn-cert" href="${escapeHtml(cert.url)}" target="_blank" rel="noopener">Гэрчилгээ татах ↗</a>`;
-      } else if (a.attendance_photo_url) {
-        actionHtml = `
-          <span class="cert-hint">📷 Зураг илгээсэн${a.attendance_photo_verified ? ' · ✓ баталгаажсан' : ''} — гэрчилгээг хүлээнэ үү</span>
-          <a class="photo-thumb-link" href="${escapeHtml(a.attendance_photo_url)}" target="_blank"><img class="photo-thumb" src="${escapeHtml(a.attendance_photo_url)}" alt=""></a>`;
+      } else if (req.required) {
+        actionHtml = st.ok
+          ? `<span class="cert-hint">✓ Нотолгоо хангалттай — гэрчилгээг хүлээнэ үү</span>`
+          : `<span class="cert-hint cert-hint--warn">📷 Гэрчилгээ авахын тулд нотолгооны зураг оруулна уу</span>`;
+        panelHtml = proofPanelHtml(a, req, photos, st);
       } else {
-        actionHtml = `
-          <span class="cert-hint cert-hint--warn">📷 Гэрчилгээ авахын тулд ирцийн зургаа илгээнэ үү</span>
-          <label class="btn-upload-photo">
-            Зураг илгээх
-            <input type="file" accept="image/*" capture="environment" data-action="upload-photo" data-id="${a.id}" hidden>
-          </label>`;
+        actionHtml = `<span class="cert-hint">Гэрчилгээг байгууллага олгохыг хүлээнэ үү</span>`;
       }
     } else if (a.status === 'pending') {
       actionHtml = `<span class="cert-hint">Байгууллагын баталгаажуулалтыг хүлээж байна</span>`;
-    } else if (a.status === 'confirmed') {
-      if (a.attendance_photo_url) {
-        actionHtml = `
-          <span class="cert-hint">📷 Ирцийн зураг илгээгдсэн${a.attendance_photo_verified ? ' · ✓ баталгаажсан' : ''}</span>
-          <label class="btn-upload-photo btn-upload-photo--replace">
-            Солих
-            <input type="file" accept="image/*" capture="environment" data-action="upload-photo" data-id="${a.id}" hidden>
-          </label>`;
-      } else {
-        actionHtml = `
-          <span class="cert-hint">Ажлаа дуусгах хүртэл хүлээнэ үү. Ирцийн зургаа урьдчилан оруулж болно.</span>
-          <label class="btn-upload-photo">
-            Зураг оруулах
-            <input type="file" accept="image/*" capture="environment" data-action="upload-photo" data-id="${a.id}" hidden>
-          </label>`;
-      }
+    } else if (a.status === 'confirmed' && req.required) {
+      actionHtml = `<span class="cert-hint">Ажил дуусахад нотолгооны зураг шаардлагатай. Урьдчилан оруулж болно.</span>`;
+      panelHtml = proofPanelHtml(a, req, photos, st);
     }
 
     return `
@@ -201,6 +272,7 @@
           <span class="status-badge ${badgeClass}">${statusLabel}</span>
           ${actionHtml}
         </div>
+        ${panelHtml}
       </div>`;
   }
 
@@ -217,28 +289,86 @@
 
     feed.innerHTML = `<div class="member-panel">${filtered.map(rowHtml).join('')}</div>`;
 
-    feed.querySelectorAll('[data-action="upload-photo"]').forEach(input => {
+    feed.querySelectorAll('[data-action="upload-proof"]').forEach(input => {
       input.addEventListener('change', () => {
-        if (input.files && input.files[0]) {
-          handleUploadPhoto(input.getAttribute('data-id'), input.files[0], input);
+        if (input.files && input.files.length) {
+          handleUploadProof(input.getAttribute('data-id'), Array.from(input.files), input);
         }
+      });
+    });
+    feed.querySelectorAll('[data-action="remove-proof"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        handleRemoveProof(btn.getAttribute('data-app'), btn.getAttribute('data-photo'), btn);
       });
     });
   }
 
-  async function handleUploadPhoto(applicationId, file, inputEl) {
-    const label = inputEl.closest('.btn-upload-photo');
-    const originalText = label ? label.firstChild.textContent : '';
-    if (label) label.firstChild.textContent = 'Илгээж байна…';
-    inputEl.disabled = true;
+  async function loadProof() {
+    const ids = activities.map(a => a.id);
     try {
-      await uploadAttendancePhoto(applicationId, file);
-      await loadActivities();
+      proofReqs = await getProofRequirementsByApplication(ids);
     } catch (err) {
-      alert('Зураг илгээхэд алдаа гарлаа: ' + (err.message || String(err)));
+      console.warn('Нотолгооны шаардлагыг ачаалж чадсангүй', err);
+      proofReqs = {};
+    }
+    await reloadProofPhotos();
+  }
+
+  async function reloadProofPhotos() {
+    try {
+      proofPhotos = await getProofPhotos(activities.map(a => a.id));
+    } catch (err) {
+      console.warn('Нотолгооны зургийг ачаалж чадсангүй', err);
+      proofPhotos = {};
+    }
+  }
+
+  async function handleUploadProof(applicationId, files, inputEl) {
+    const a = activities.find(x => String(x.id) === String(applicationId));
+    const req = proofReqs[String(applicationId)];
+    if (!a || !req || !req.required) return;
+
+    const st = proofState(req, photosFor(a).length);
+    const queue = files.slice(0, st.slotsLeft);
+    const notes = [];
+    if (files.length > queue.length) {
+      notes.push(`Дээд хэмжээ ${req.max} зураг тул зөвхөн ${queue.length} зургийг оруулав.`);
+    }
+    if (!queue.length) {
+      alert(`Зургийн дээд хэмжээнд (${req.max}) хүрсэн байна.`);
+      inputEl.value = '';
+      return;
+    }
+
+    const textEl = inputEl.closest('.btn-upload-photo').querySelector('.upload-label-text');
+    inputEl.disabled = true;
+    for (let i = 0; i < queue.length; i++) {
+      textEl.textContent = `Илгээж байна… ${i + 1}/${queue.length}`;
+      try {
+        await uploadProofPhoto(a.id, queue[i]);
+      } catch (err) {
+        console.error(err);
+        notes.push(`${queue[i].name}: ${err.message || String(err)}`);
+      }
+    }
+    await reloadProofPhotos();
+    renderFeed();
+    if (notes.length) alert(notes.join('\n'));
+  }
+
+  async function handleRemoveProof(applicationId, photoId, btn) {
+    const photo = (proofPhotos[String(applicationId)] || []).find(p => String(p.id) === String(photoId));
+    if (!photo) return;
+    if (!confirm('Энэ зургийг устгах уу?')) return;
+    btn.disabled = true;
+    try {
+      await deleteProofPhoto(photo);
+      await reloadProofPhotos();
+      renderFeed();
+    } catch (err) {
+      alert('Зураг устгахад алдаа гарлаа: ' + (err.message || String(err)));
       console.error(err);
-      if (label) label.firstChild.textContent = originalText;
-      inputEl.disabled = false;
+      btn.disabled = false;
     }
   }
 
@@ -290,6 +420,7 @@
       });
       summary.doneCount += orphanCerts.length;
 
+      await loadProof();
       renderStats(summary);
       renderFeed();
     } catch (err) {
