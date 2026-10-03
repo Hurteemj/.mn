@@ -44,9 +44,8 @@
         <div class="section-label">Байгууллагын мэдээлэл</div>
         <div class="field-row">
           <div class="field">
-            <label for="org-name">Байгууллагын нэр (латин үсгээр) <span class="req" title="Заавал бөглөх">*</span></label>
-            <input type="text" id="org-name" name="org-name" autocomplete="off" spellcheck="false" placeholder="e.g. Green Steppe NGO" required>
-            <p class="field-hint" id="orgNameHint">Зөвхөн латин (англи) үсэг, зай, зураас, апостроф (') ашиглана уу.</p>
+            <label for="org-name">Байгууллагын нэр <span class="req" title="Заавал бөглөх">*</span></label>
+            <input type="text" id="org-name" name="org-name" autocomplete="off" placeholder="Жишээ: Ногоон Тал ТББ / Green Steppe NGO" required>
           </div>
 
           <div class="field">
@@ -203,39 +202,7 @@
       });
     });
 
-    const LATIN_ONLY_PATTERN = /^[A-Za-z\s'-]*$/;
-
-    function enforceLatinOnly(input) {
-      const hint = document.getElementById(input.getAttribute('aria-describedby'));
-
-      input.addEventListener('beforeinput', (e) => {
-        if (e.data && !/^[A-Za-z\s'-]*$/.test(e.data)) {
-          e.preventDefault();
-          if (hint) {
-            hint.classList.add('is-flagged');
-            clearTimeout(hint._flashTimer);
-            hint._flashTimer = setTimeout(() => hint.classList.remove('is-flagged'), 900);
-          }
-        }
-      });
-
-      input.addEventListener('input', () => {
-        if (!LATIN_ONLY_PATTERN.test(input.value)) {
-          input.value = input.value.replace(/[^A-Za-z\s'-]/g, '');
-          if (hint) {
-            hint.classList.add('is-flagged');
-            clearTimeout(hint._flashTimer);
-            hint._flashTimer = setTimeout(() => hint.classList.remove('is-flagged'), 900);
-          }
-        }
-      });
-    }
-
     const orgNameInput = document.getElementById('org-name');
-    orgNameInput.setAttribute('aria-describedby', 'orgNameHint');
-    orgNameInput.setAttribute('pattern', "[A-Za-z\\s'-]+");
-    orgNameInput.title = 'Зөвхөн латин (англи) үсэг, зай, зураас, апостроф (\') ашиглана уу.';
-    enforceLatinOnly(orgNameInput);
 
     const passwordEl = document.getElementById('password');
     const passwordConfirmEl = document.getElementById('password-confirm');
@@ -288,8 +255,8 @@
       const passwordConfirm = passwordConfirmEl.value;
       const orgName = orgNameInput.value.trim();
 
-      if (!LATIN_ONLY_PATTERN.test(orgName)) {
-        showMessage('Байгууллагын нэрийг зөвхөн латин (англи) үсгээр бичнэ үү.', true);
+      if (!orgName) {
+        showMessage('Байгууллагын нэрийг оруулна уу.', true);
         orgNameInput.focus();
         return;
       }
