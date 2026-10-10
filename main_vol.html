@@ -407,10 +407,22 @@
     try {
       const { data: opps, error } = await supabaseClient
         .from('opportunities')
-        .select(`*, org:organizations(org_name, verification_status, ${ORG_LOGO_COLUMN})`)
+        .select('*')
         .eq('status', 'active')
         .order('created_at', { ascending: false });
       if (error) throw error;
+
+      // Volunteers can't read the organizations table directly (RLS), so read the safe public view instead.
+      const orgIds = [...new Set(opps.map(o => o.org_id).filter(Boolean))];
+      const orgMap = {};
+      if (orgIds.length) {
+        const { data: orgs, error: orgsError } = await supabaseClient
+          .from('organizations_public')
+          .select('id, org_name, verification_status, avatar_url')
+          .in('id', orgIds);
+        if (orgsError) throw orgsError;
+        (orgs || []).forEach(org => { orgMap[org.id] = org; });
+      }
 
       const ids = opps.map(o => o.id);
       let counts = {};
@@ -443,9 +455,9 @@
 
       oppList = opps.map(o => ({
         ...o,
-        org_name: (o.org && o.org.org_name) || 'Байгууллага',
-        org_verification_status: (o.org && o.org.verification_status) || null,
-        org_logo_url: (o.org && o.org[ORG_LOGO_COLUMN]) || null,
+        org_name: (orgMap[o.org_id] && orgMap[o.org_id].org_name) || 'Байгууллага',
+        org_verification_status: (orgMap[o.org_id] && orgMap[o.org_id].verification_status) || null,
+        org_logo_url: (orgMap[o.org_id] && orgMap[o.org_id].avatar_url) || null,
         applicant_count: counts[o.id] || 0,
         my_status: myApps[o.id] || null,
         my_app_id: myAppIds[o.id] || null
