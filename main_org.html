@@ -307,6 +307,14 @@
     return div.innerHTML;
   }
 
+  // Shows the NGO's photo when available; falls back to the green initials box if missing or the image fails to load.
+  function orgLogoHtml(name, url) {
+    const img = url
+      ? `<img src="${escapeHtml(url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">`
+      : '';
+    return `<div class="org-logo" style="background:#3E6B4E;position:relative;overflow:hidden;">${escapeHtml(orgInitials(name))}${img}</div>`;
+  }
+
   function cardHtml(o) {
     const cat = CATEGORY_MAP[o.category] || CATEGORY_MAP.other;
     const statusClass = o.status !== 'active' ? ` opp-card--${o.status}` : '';
@@ -332,7 +340,7 @@
     return `
       <article class="opp-card opp-card--manage${statusClass}" data-status="${o.status}">
         <div class="opp-top">
-          <div class="org-logo" style="background:#3E6B4E">${orgInitials(currentProfile && currentProfile.org_name)}</div>
+          ${orgLogoHtml(currentProfile && currentProfile.org_name, currentProfile && currentProfile.avatar_url)}
           <div class="opp-top-right">
             ${o.experience_required ? `<span class="exp-badge">🎓 Туршлага</span>` : ''}
             ${ageBadgeText ? `<span class="age-badge">🔞 ${ageBadgeText} нас</span>` : ''}
