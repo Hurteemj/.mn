@@ -183,6 +183,9 @@
   const LOGO_COLORS = ['#3E6B4E', '#3E7CA6', '#C96A36', '#C99A3E'];
   const HOURS_GOAL = 20;
 
+  // NOTE: change this if your organizations table uses a different column name for the NGO's photo.
+  const ORG_LOGO_COLUMN = 'logo_url';
+
   let currentProfile = null;
   let oppList = [];
   let activeFilter = 'active';
@@ -210,6 +213,14 @@
     const div = document.createElement('div');
     div.textContent = str == null ? '' : str;
     return div.innerHTML;
+  }
+
+  // Shows the NGO's photo when available; falls back to colored initials if missing or the image fails to load.
+  function orgLogoHtml(name, url, extraClass = '') {
+    const img = url
+      ? `<img src="${escapeHtml(url)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove()">`
+      : '';
+    return `<div class="org-logo ${extraClass}" style="background:${logoColor(name)};position:relative;overflow:hidden;">${escapeHtml(initials(name))}${img}</div>`;
   }
 
   const NEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -281,7 +292,7 @@
     return `
       <article class="opp-card" data-opp-id="${o.id}">
         <div class="opp-top">
-          <div class="org-logo" style="background:${logoColor(o.org_name)}">${initials(o.org_name)}</div>
+          ${orgLogoHtml(o.org_name, o.org_logo_url)}
           <svg class="connector-knot" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M11 2C15.9 2 20 6.1 20 11C20 15.9 15.9 20 11 20C6.1 20 2 15.9 2 11C2 6.1 6.1 2 11 2Z" stroke="currentColor" stroke-width="1.3"/><path d="M11 2C11 8 8 11 2 11M11 2C11 8 14 11 20 11M11 20C11 14 8 11 2 11M11 20C11 14 14 11 20 11" stroke="currentColor" stroke-width="1.3"/></svg>
           <div class="opp-top-right">
             ${o.experience_required ? `<span class="exp-badge">🎓 Туршлага</span>` : ''}
@@ -357,7 +368,7 @@
     const counts = {};
     oppList.forEach(o => {
       const key = o.org_id;
-      if (!counts[key]) counts[key] = { name: o.org_name, count: 0 };
+      if (!counts[key]) counts[key] = { name: o.org_name, logo: o.org_logo_url, count: 0 };
       counts[key].count += 1;
     });
 
@@ -371,7 +382,7 @@
 
     list.innerHTML = top.map(org => `
       <li>
-        <span class="org-logo org-logo--sm" style="background:${logoColor(org.name)}">${initials(org.name)}</span>
+        ${orgLogoHtml(org.name, org.logo, 'org-logo--sm')}
         <div>
           <p class="org-name">${escapeHtml(org.name)}</p>
           <p class="org-sub">${org.count} нээлттэй ажил</p>
@@ -396,7 +407,7 @@
     try {
       const { data: opps, error } = await supabaseClient
         .from('opportunities')
-        .select('*, org:organizations(org_name, verification_status)')
+        .select(`*, org:organizations(org_name, verification_status, ${ORG_LOGO_COLUMN})`)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -434,6 +445,7 @@
         ...o,
         org_name: (o.org && o.org.org_name) || 'Байгууллага',
         org_verification_status: (o.org && o.org.verification_status) || null,
+        org_logo_url: (o.org && o.org[ORG_LOGO_COLUMN]) || null,
         applicant_count: counts[o.id] || 0,
         my_status: myApps[o.id] || null,
         my_app_id: myAppIds[o.id] || null
