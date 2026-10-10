@@ -98,7 +98,6 @@
       </div>
 
       <div class="side-card side-card--dark">
-        <svg class="side-knot" width="26" height="26" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M11 2C15.9 2 20 6.1 20 11C20 15.9 15.9 20 11 20C6.1 20 2 15.9 2 11C2 6.1 6.1 2 11 2Z" stroke="currentColor" stroke-width="1.3"/><path d="M11 2C11 8 8 11 2 11M11 2C11 8 14 11 20 11M11 20C11 14 8 11 2 11M11 20C11 14 14 11 20 11" stroke="currentColor" stroke-width="1.3"/></svg>
         <h4>Байгууллага мөн үү?</h4>
         <p>Сайн дурынхан хайж буй бол өөрийн ажлаа платформ дээр нэмээрэй.</p>
         <a class="btn-ghost" href="organization_sign_up.html" id="orgSignupLink">Ажил нийтлэх</a>
@@ -293,7 +292,6 @@
       <article class="opp-card" data-opp-id="${o.id}">
         <div class="opp-top">
           ${orgLogoHtml(o.org_name, o.org_logo_url)}
-          <svg class="connector-knot" width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M11 2C15.9 2 20 6.1 20 11C20 15.9 15.9 20 11 20C6.1 20 2 15.9 2 11C2 6.1 6.1 2 11 2Z" stroke="currentColor" stroke-width="1.3"/><path d="M11 2C11 8 8 11 2 11M11 2C11 8 14 11 20 11M11 20C11 14 8 11 2 11M11 20C11 14 14 11 20 11" stroke="currentColor" stroke-width="1.3"/></svg>
           <div class="opp-top-right">
             ${o.experience_required ? `<span class="exp-badge">🎓 Туршлага</span>` : ''}
             ${ageBadgeText ? `<span class="age-badge">🔞 ${ageBadgeText} нас</span>` : ''}
