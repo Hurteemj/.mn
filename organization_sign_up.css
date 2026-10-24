@@ -540,3 +540,55 @@ button.legal-close:not(.btn):hover { color: var(--ink); }
   .legal-head, .legal-foot { padding-left: 20px; padding-right: 20px; }
   .legal-body { padding: 18px 20px; }
 }
+/* ---- Phone layout: one continuous, compact single-column scroll (desktop unchanged) ---- */
+@media (max-width: 600px) {
+  html { -webkit-text-size-adjust: 100%; }
+
+  .site-header { padding: 10px 16px; }
+  .site-header h1 { font-size: 1.1rem; }
+
+  main { padding: 10px 10px 32px; }
+
+  .intro-box { padding: 12px 14px 12px 18px; margin-bottom: 10px; }
+  .intro-box p { font-size: 0.88rem; line-height: 1.4; }
+
+  .form-box { padding: 12px 12px; border-radius: var(--radius-md); }
+  .form-box h2 { font-size: 1.1rem; margin-bottom: 4px; }
+
+  .section-label { margin: 12px 0 8px; padding-bottom: 4px; font-size: 0.75rem; }
+
+  /* The base .field has flex-basis 240px, which in a column layout would become
+     a 240px tall box, so reset it here. */
+  .field-row { flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .field,
+  .field-row--passwords .field { flex: 0 0 auto; width: 100%; }
+
+  .field label, .field-stack label { margin-bottom: 3px; font-size: 0.8rem; line-height: 1.2; }
+  .field-stack { margin-bottom: 8px; }
+
+  /* 16px text stops iOS from auto-zooming into a field on tap. */
+  .form-box input[type="text"],
+  .form-box input[type="email"],
+  .form-box input[type="tel"],
+  .form-box input[type="url"],
+  .form-box input[type="password"],
+  .form-box select,
+  .form-box textarea {
+    font-size: 16px;
+    padding: 8px 12px;
+    min-height: 40px;
+  }
+  .form-box textarea { min-height: 80px; }
+  .password-wrap input { padding-right: 48px; }
+
+  .section-note { font-size: 0.82rem; margin: -2px 0 10px; line-height: 1.45; }
+
+  .checkbox-row { gap: 10px; margin: 8px 0 10px; font-size: 0.85rem; line-height: 1.4; }
+  .checkbox-row input[type="checkbox"] { width: 22px; height: 22px; margin-top: 0; }
+
+  .btn-row { gap: 10px; margin-top: 4px; }
+  .btn { padding: 11px 20px; font-size: 0.95rem; }
+
+  .modal-overlay { padding: 16px; }
+  .modal-overlay .modal { padding: 28px 22px 22px; }
+}
