@@ -358,10 +358,10 @@
   let selectedIds = new Set();
   let existingTemplate = null;
   let issuedCerts = {};
-  let proofReq = { ...PROOF_DEFAULT_REQ }; // photo requirement the org set for this event
-  let proofByApp = {};                     // { [applicationId]: [{ id, url, path, createdAt }] }
+  let proofReq = { ...PROOF_DEFAULT_REQ }; //zurag shaardah
+  let proofByApp = {};                   
 
-  // A volunteer's photos = new proof photos + the legacy attendance photo (if any).
+  // volunteeriin zurag 
   function photoListFor(a) {
     const list = [];
     if (a.attendance_photo_url) list.push({ url: a.attendance_photo_url, legacy: true });
@@ -423,6 +423,12 @@
     const avatarHtml = v.avatar_url ? `<img src="${v.avatar_url}" alt="">` : initialsFor(fullName);
     const metaBits = [v.phone, CITY_LABELS[v.city] || v.city, INTEREST_LABELS[v.interests] || v.interests].filter(Boolean);
 
+    const emailHtml = `
+      <div class="profile-field">
+        <label>И-мэйл</label>
+        <p class="value">${v.email ? `<a href="mailto:${escapeHtml(v.email)}">${escapeHtml(v.email)}</a>` : 'Мэдээлэл оруулаагүй'}</p>
+      </div>`;
+
     const workEduHtml = (v.workplace || v.education) ? `
       <div class="profile-field">
         <label>Ажлын газар / Сургууль</label>
@@ -477,6 +483,7 @@
           <p class="value${isMinor ? ' is-minor' : ''}">${age} нас${isMinor ? ' — Насанд хүрээгүй ⚠️' : ''}</p>
         </div>`;
       })()}
+      ${emailHtml}
       ${guardianHtml}
       ${workEduHtml}
       ${socialHtml}
@@ -881,8 +888,7 @@
     renderMembers();
   });
 
-  // Photo requirement for this event + the proof photos volunteers uploaded. Failures fall back to the
-  // legacy attendance photo only, so the page keeps working if the proof-photo tables aren't set up yet.
+  // zurag shaardah
   async function loadProofData(completedIds) {
     try {
       proofReq = await getProofRequirement(oppId);
