@@ -1,4 +1,3 @@
-
 const SUPABASE_URL = "https://ojakrptuwdngewmuazgg.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_HRKweLS7ovBiNtR8K7Un8g_q9Dn8kEV";
 
@@ -178,7 +177,7 @@ async function getOrgApplicants() {
       opportunity_id,
       applicant_experience,
       applicant_motivation,
-      volunteer:volunteers ( id, first_name, last_name, birthdate, phone, city, interests, about, avatar_url, instagram_url, facebook_url, workplace, education, guardian_relation, guardian_name, guardian_phone, guardian_email )
+      volunteer:volunteers ( id, first_name, last_name, email, birthdate, phone, city, interests, about, avatar_url, instagram_url, facebook_url, workplace, education, guardian_relation, guardian_name, guardian_phone, guardian_email )
     `)
     .in("opportunity_id", opps.map(o => o.id))
     .order("applied_at", { ascending: false });
@@ -227,7 +226,7 @@ async function getApplicantsForOpportunity(oppId) {
       id, status, hours_logged, applied_at, opportunity_id,
       applicant_experience, applicant_motivation,
       attendance_photo_url, attendance_photo_verified,
-      volunteer:volunteers ( id, first_name, last_name, birthdate, phone, city, interests, about, avatar_url, instagram_url, facebook_url, workplace, education, guardian_relation, guardian_name, guardian_phone, guardian_email )
+      volunteer:volunteers ( id, first_name, last_name, email, birthdate, phone, city, interests, about, avatar_url, instagram_url, facebook_url, workplace, education, guardian_relation, guardian_name, guardian_phone, guardian_email )
     `)
     .eq("opportunity_id", oppId)
     .order("applied_at", { ascending: false });
@@ -454,8 +453,8 @@ async function getIssuedCertificates(applicationIds) {
 
 const ATTENDANCE_PHOTO_BUCKET = "attendance-photos";
 
-// Volunteer uploads proof-of-attendance photo for one of their own
-// applications. Required before an org can issue a certificate for it.
+// Volunteeruud zurgaa uplaoddah
+// zarim zurag shaarddagad
 async function uploadAttendancePhoto(applicationId, file) {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) throw new Error("Нэвтрээгүй байна.");
@@ -496,8 +495,8 @@ async function uploadAttendancePhoto(applicationId, file) {
   return data;
 }
 
-// Org optionally marks a volunteer's submitted attendance photo as
-// verified. Purely informational — does not gate certificate issuance.
+// baiguulaga zurag haraad certifificate uguh
+// confirm hiih
 async function setAttendancePhotoVerified(applicationId, verified) {
   const { data, error } = await supabaseClient
     .from("applications")
