@@ -1,12 +1,4 @@
-/* legal-modal.js
- * Shows the Terms and Conditions / Privacy Policy inside the sign-up page (a pop-up)
- * instead of opening a new tab. It loads the two existing pages and shows their text,
- * so there is only one copy of each document to maintain.
- *
- * Any link whose href is exactly "terms_and_conditions.html" or "privacy_policy.html"
- * is picked up automatically. Ctrl/Cmd-click or middle-click still opens the real page.
- * Needs the .legal-* styles from the page's stylesheet.
- */
+
 (function () {
   const DOCS = {
     'terms_and_conditions.html': 'Үйлчилгээний нөхцөл',
